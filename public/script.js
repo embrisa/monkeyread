@@ -510,9 +510,11 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDifficulty();
     updateDisplays();
     resetUIForNewRound();
-});
 
-function showNextRoundHint(show) {
-    nextRoundHint.textContent = show ? 'Tip: Press Enter to start the next round.' : '';
-    nextRoundHint.style.display = show ? 'block' : 'none';
-}
+    function showNextRoundHint(show) {
+        if (nextRoundHint) {
+            nextRoundHint.textContent = show ? 'Tip: Press Enter to start the next round.' : '';
+            nextRoundHint.style.display = show ? 'block' : 'none';
+        }
+    }
+});
