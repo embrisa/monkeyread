@@ -27,12 +27,12 @@
     --color-info: #43BCCD;
     /* Sky Blue */
 
-    --color-pos-1: #F76E11;
-    /* Orange */
-    --color-pos-2: #7AC74F;
-    /* Green */
-    --color-pos-3: #43BCCD;
-    /* Blue */
+    --color-pos-1: #FF2D2D;
+    /* Vivid Red */
+    --color-pos-2: #2DFF5B;
+    /* Bright Green */
+    --color-pos-3: #2D9CFF;
+    /* Vivid Blue */
 
     --border-radius-soft: 16px;
     --border-radius-medium: 24px;
