@@ -249,18 +249,20 @@ li {
 
 /* --- Letter Display --- */
 #letter-display-area {
-    width: 180px;
-    height: 120px;
+    width: 320px;
+    height: 220px;
     background: var(--wood-gradient);
-    border: 4px solid #A47149;
-    margin: 25px auto;
+    border: 6px solid #A47149;
+    margin: 35px auto;
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: 30px 30px 40px 40px/40px 40px 30px 30px;
-    box-shadow: 0 6px 24px rgba(80, 60, 20, 0.18), 0 1px 0 #C68642 inset;
+    border-radius: 48px 48px 60px 60px/60px 60px 48px 48px;
+    box-shadow: 0 10px 36px rgba(80, 60, 20, 0.22), 0 2px 0 #C68642 inset;
     position: relative;
     animation: swing 1.2s cubic-bezier(.36, .07, .19, .97) infinite alternate;
+    overflow: hidden;
+    /* Ensure nothing escapes the container */
 }
 
 @keyframes swing {
@@ -275,16 +277,21 @@ li {
 
 #flashing-letter {
     font-family: var(--font-heading);
-    font-size: 90px;
+    font-size: 170px;
     font-weight: 900;
     color: var(--color-letter-flash-text);
-    text-shadow: 0 0 6px #fff, 0 0 2px #000, 2px 4px 0 #FFFBEA, 0 0 12px #F4A25944;
+    text-shadow: 0 0 12px #fff, 0 0 4px #000, 4px 8px 0 #FFFBEA, 0 0 24px #F4A25944;
     background: none;
-    border-radius: 18px;
-    padding: 0.1em 0.4em;
-    box-shadow: 0 2px 12px #0002;
+    border-radius: 40px;
+    padding: 0.2em 0.6em;
+    box-shadow: 0 4px 24px #0003;
     visibility: hidden;
     transition: none;
+    display: inline-block;
+    margin: 0 auto;
+    max-width: 90%;
+    max-height: 90%;
+    overflow: hidden;
 }
 
 /* --- Input Area --- */
@@ -585,12 +592,14 @@ li {
     }
 
     #letter-display-area {
-        width: 120px;
+        width: 180px;
         height: 120px;
     }
 
     #flashing-letter {
-        font-size: 70px;
+        font-size: 90px;
+        border-radius: 18px;
+        padding: 0.1em 0.4em;
     }
 
     #input-area input[type="text"] {
