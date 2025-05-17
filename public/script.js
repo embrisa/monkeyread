@@ -44,14 +44,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Color codes for flashing letters (1st: Red, 2nd: Green, 3rd: Blue)
     const flashingLetterColors = [
         '#FF2D2D', // Vivid Red (1st)
-        '#2DFF5B', // Bright Green (2nd)
+        '#16C172', // Darker Green (2nd)
         '#2D9CFF'  // Vivid Blue (3rd)
     ];
     // Faded background colors (RGBA with higher opacity)
     const flashingLetterBgColors = [
-        'rgba(255, 45, 45, 0.32)',   // Vivid Red bg
-        'rgba(45, 255, 91, 0.22)',   // Bright Green bg
-        'rgba(45, 156, 255, 0.22)'   // Vivid Blue bg
+        'rgba(255, 45, 45, 0.72)',   // Vivid Red bg
+        'rgba(22, 193, 114, 0.72)',  // Darker Green bg
+        'rgba(45, 156, 255, 0.72)'   // Vivid Blue bg
     ];
 
     const defaultSpeedChangeOnCorrect = 25; // ms, base speed decrease for correct letters (wrong order)
