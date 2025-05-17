@@ -273,12 +273,6 @@ li {
     color: #fff;
 }
 
-/* Style for the new reflash button, can be same as secondary */
-#reflash-button {
-    /* Uses .button and .button-secondary classes, specific overrides can go here if needed */
-    /* Example: might want slightly different margin if placed differently */
-}
-
 /* --- Letter Display --- */
 #letter-display-area {
     background: #fff;
@@ -654,4 +648,25 @@ li {
     .how-fast-subhead {
         font-size: 1rem;
     }
+}
+
+#reflash-button.button-secondary {
+    background: #fff;
+    color: var(--color-primary-accent);
+    border: 2px solid var(--color-primary-accent);
+}
+
+#reflash-button.button-secondary:hover:not(:disabled) {
+    background: var(--color-primary-accent-hover);
+    color: #fff;
+}
+
+#reflash-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+#progression-style-selection {
+    display: none;
 }

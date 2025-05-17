@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const flashingLetterDisplay = document.getElementById('flashing-letter');
     const startButton = document.getElementById('start-button');
     const nextRoundButton = document.getElementById('next-round-button');
-    const reflashButton = document.getElementById('reflash-button');
     const submitButton = document.getElementById('submit-button');
     const inputArea = document.getElementById('input-area');
     const letterInputsWrapper = document.getElementById('letter-inputs-wrapper');
@@ -14,8 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentSpeedDisplay = document.getElementById('current-speed');
     const countdownMessageDisplay = document.getElementById('countdown-message');
     const gameModeRadios = document.querySelectorAll('input[name="gameMode"]');
-    const progressionStyleRadios = document.querySelectorAll('input[name="progressionStyle"]');
     const difficultySelector = document.getElementById('difficulty-selector');
+    const reflashButton = document.getElementById('reflash-button');
 
     // Game State Variables
     let currentLetters = [];
@@ -23,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let score = 0;
     let gameActive = false;
     let lettersDisplayed = false;
-    let selectedProgressionStyle = "auto";
+    let selectedGameMode = "auto";
     let numberOfLettersToDisplay = 3;
     let reflashCount = 0;
     let reflashTimeoutId = null;
@@ -77,15 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const radio of gameModeRadios) {
             if (radio.checked) selectedGameMode = radio.value;
         }
-        for (const radio of progressionStyleRadios) {
-            if (radio.checked) selectedProgressionStyle = radio.value;
-        }
     }
 
     function toggleOptionsInputs(enable) {
         gameModeRadios.forEach(radio => radio.disabled = !enable);
-        progressionStyleRadios.forEach(radio => radio.disabled = !enable);
-        difficultySelector.disabled = !enable;
     }
 
     function createLetterInputs(num) {
@@ -113,19 +107,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Display Logic ---
     function manageFlashAndInputCycle() {
-        // Core loop: flash N letters, 3s pause, repeat until input
+        // Core loop: flash N letters, then input area is shown, re-flash is manual
         flashCycleActive = true;
         reflashCount = 0;
         inputArea.classList.add('hidden');
         submitButton.disabled = true;
+        reflashButton.classList.add('hidden');
+        reflashButton.disabled = true;
         flashingLetterDisplay.textContent = '';
         flashingLetterDisplay.style.visibility = 'hidden';
         letterInputs.forEach(input => input.value = '');
 
-        // --- Letter Flashing Sequence ---
         function flashLettersSequence(callback) {
             let letterIndex = 0;
-            let phase = 'pauseBefore'; // 'pauseBefore', 'show', 'hide', 'done'
+            let phase = 'pauseBefore';
             let lastTimestamp = null;
             let pauseBeforeMs = 300;
             let pauseBetweenMs = Math.max(10, actualDisplaySpeed / 3);
@@ -174,44 +169,42 @@ document.addEventListener('DOMContentLoaded', () => {
             requestAnimationFrame(step);
         }
 
-        // --- 3s Pause (using requestAnimationFrame) ---
-        function startPauseAndMaybeReflash() {
+        function afterFlashShowInput() {
             if (!flashCycleActive) return;
             inputArea.classList.remove('hidden');
             submitButton.disabled = false;
+            reflashButton.classList.remove('hidden');
+            reflashButton.disabled = false;
             if (letterInputs.length > 0) letterInputs[0].focus();
-            // Show re-flash message if not first cycle
-            if (reflashCount > 0) {
-                countdownMessageDisplay.textContent = `Re-flash #${reflashCount + 1}! Try to answer for max score.`;
-                setTimeout(() => { countdownMessageDisplay.textContent = ''; }, 1200);
-            }
-            // Start 3s timer using requestAnimationFrame
-            let pauseStart = null;
-            function pauseStep(now) {
-                if (!flashCycleActive) return;
-                if (!pauseStart) pauseStart = now;
-                let elapsed = now - pauseStart;
-                if (elapsed >= 3000) {
-                    reflashCount++;
-                    flashLettersSequence(startPauseAndMaybeReflash);
-                } else {
-                    reflashTimeoutId = requestAnimationFrame(pauseStep);
-                }
-            }
-            reflashTimeoutId = requestAnimationFrame(pauseStep);
         }
 
-        flashLettersSequence(startPauseAndMaybeReflash);
+        flashLettersSequence(afterFlashShowInput);
+    }
+
+    function handleReflashRequest() {
+        if (!gameActive || reflashButton.disabled) return;
+        reflashCount++;
+        submitButton.disabled = true;
+        reflashButton.disabled = true;
+        flashingLetterDisplay.textContent = '';
+        flashingLetterDisplay.style.visibility = 'hidden';
+        inputArea.classList.add('hidden');
+        function afterFlashShowInput() {
+            if (!flashCycleActive) return;
+            inputArea.classList.remove('hidden');
+            submitButton.disabled = false;
+            reflashButton.disabled = false;
+            if (letterInputs.length > 0) letterInputs[0].focus();
+        }
+        flashLettersSequence(afterFlashShowInput);
     }
 
     function stopFlashCycle() {
         flashCycleActive = false;
-        if (reflashTimeoutId) {
-            cancelAnimationFrame(reflashTimeoutId);
-            reflashTimeoutId = null;
-        }
         flashingLetterDisplay.textContent = '';
         flashingLetterDisplay.style.visibility = 'hidden';
+        reflashButton.classList.add('hidden');
+        reflashButton.disabled = true;
     }
 
     // --- Game Flow & UI Updates ---
@@ -227,8 +220,9 @@ document.addEventListener('DOMContentLoaded', () => {
         countdownMessageDisplay.textContent = "";
         inputArea.classList.add('hidden');
         nextRoundButton.classList.add('hidden');
-        reflashButton.classList.add('hidden');
         submitButton.disabled = true;
+        reflashButton.classList.add('hidden');
+        reflashButton.disabled = true;
         flashingLetterDisplay.textContent = "";
         flashingLetterDisplay.style.visibility = 'hidden';
         if (countdownIntervalId) clearInterval(countdownIntervalId);
@@ -239,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function startGame() {
         gameActive = true;
         updateSelectedOptions();
-        resetUIForNewRound();
+        resetUIForNewRound(); // Use the round reset
         toggleOptionsInputs(false);
 
         currentRound = 1;
@@ -247,14 +241,13 @@ document.addEventListener('DOMContentLoaded', () => {
         actualDisplaySpeed = initialDisplaySpeed; // Reset speed to initial
         updateDisplays();
         startButton.textContent = "Restart Game";
-        reflashButton.classList.add('hidden');
-        nextRoundButton.classList.add('hidden');
 
         proceedToNextRoundSetup();
     }
 
-    function advanceToNextRound() {
+    function advanceToNextRound() { // Renamed from advanceLevel
         currentRound++;
+        // actualDisplaySpeed is adjusted in handleAnswerSubmitted, not here directly by level
         updateDisplays(); // Update round number
         proceedToNextRoundSetup();
     }
@@ -262,8 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function proceedToNextRoundSetup() {
         resetUIForNewRound();
         generateLetters();
-        createLetterInputs(numberOfLettersToDisplay);
-        currentSpeedDisplay.textContent = actualDisplaySpeed;
+        currentSpeedDisplay.textContent = actualDisplaySpeed; // Ensure speed is updated for this round
         manageFlashAndInputCycle();
     }
 
@@ -296,6 +288,8 @@ document.addEventListener('DOMContentLoaded', () => {
         stopFlashCycle();
         flashingLetterDisplay.style.visibility = 'hidden';
         flashingLetterDisplay.textContent = "";
+        reflashButton.classList.add('hidden');
+        reflashButton.disabled = true;
 
         const userGuess = letterInputs.map(input => input.value.toUpperCase().trim());
 
@@ -372,54 +366,27 @@ document.addEventListener('DOMContentLoaded', () => {
         updateDisplays(); // Update score, round, and new speed display
 
         if (gameActive) {
-            if (selectedProgressionStyle === "auto") {
-                startNextRoundCountdown();
-            } else {
-                nextRoundButton.classList.remove('hidden');
-                nextRoundButton.disabled = false;
-            }
+            nextRoundButton.classList.remove('hidden');
+            nextRoundButton.disabled = false;
         }
         lettersDisplayed = false; // No longer used, but kept for compatibility
     }
 
-    function startNextRoundCountdown() {
-        nextRoundButton.classList.add('hidden');
-        let count = 3;
-        countdownMessageDisplay.textContent = `Next round in ${count}...`;
-        if (countdownIntervalId) clearInterval(countdownIntervalId);
-
-        countdownIntervalId = setInterval(() => {
-            count--;
-            if (count > 0) {
-                countdownMessageDisplay.textContent = `Next round in ${count}...`;
-            } else if (count === 0) {
-                countdownMessageDisplay.textContent = "Starting next round!";
-            } else {
-                clearInterval(countdownIntervalId);
-                countdownMessageDisplay.textContent = "";
-                if (gameActive) advanceToNextRound();
-            }
-        }, 1000);
-    }
-
     function updateDifficulty() {
         numberOfLettersToDisplay = parseInt(difficultySelector.value, 10);
-        if (!gameActive) {
-            createLetterInputs(numberOfLettersToDisplay);
-        }
+        createLetterInputs(numberOfLettersToDisplay);
     }
 
     // --- Event Listeners ---
     startButton.addEventListener('click', () => {
         stopFlashCycle();
-        if (countdownIntervalId) clearInterval(countdownIntervalId);
         gameActive = false;
         toggleOptionsInputs(true);
         startGame();
     });
 
     nextRoundButton.addEventListener('click', () => {
-        if (gameActive && selectedProgressionStyle === "manual") {
+        if (gameActive) {
             nextRoundButton.classList.add('hidden');
             nextRoundButton.disabled = true;
             countdownMessageDisplay.textContent = "";
@@ -427,9 +394,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    reflashButton.addEventListener('click', handleReflashRequest);
-
     submitButton.addEventListener('click', handleAnswerSubmitted);
+
+    reflashButton.addEventListener('click', handleReflashRequest);
 
     // Add event listeners to letterInputsWrapper using event delegation
     letterInputsWrapper.addEventListener('input', (e) => {
@@ -460,13 +427,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    [...gameModeRadios, ...progressionStyleRadios].forEach(radio => {
+    [...gameModeRadios].forEach(radio => {
         radio.addEventListener('change', () => {
             if (!gameActive) {
                 updateSelectedOptions();
             } else {
                 if (radio.name === "gameMode") radio.checked = (radio.value === selectedGameMode);
-                if (radio.name === "progressionStyle") radio.checked = (radio.value === selectedProgressionStyle);
             }
         });
     });
@@ -482,7 +448,4 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDisplays();
     toggleOptionsInputs(true);
     resetUIForNewRound();
-    startButton.textContent = "Start Game";
-    startButton.classList.add('button-primary');
-    startButton.classList.remove('button-secondary');
 });

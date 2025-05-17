@@ -44,7 +44,7 @@
         <div id="controls-area">
             <button id="start-button" class="button button-primary">Start Game</button>
             <button id="next-round-button" class="button button-secondary hidden">Next Round</button>
-            <button id="reflash-button" class="button button-secondary hidden">Re-flash Letters</button>
+            <button id="reflash-button" class="button button-secondary hidden" type="button">Re-flash Letters</button>
         </div>
 
         <div id="letter-display-area" aria-live="polite" aria-atomic="true">
@@ -76,26 +76,27 @@
         <div id="instructions">
             <h2>How to Play Monkeyread</h2>
             <ol>
-                <li>Select your Progression Style and Difficulty.</li>
+                <li>Select your Difficulty.</li>
                 <li>Click "Start Game". Glyphs (letters) will flash in bold black on a white background. Pay attention
                     to their order!</li>
                 <li>Enter the glyphs you saw into the input boxes in the correct order. All letters and inputs are
                     high-contrast for easy reading.</li>
-                <li>If you need to see the letters again, click "Re-flash Letters". Note that each re-flash will reduce
-                    your potential score for that round.</li>
+                <li><strong>Re-flash:</strong> If you need to see the sequence again, click the <strong>Re-flash
+                        Letters</strong> button. Each re-flash reduces your potential score for the round by 20%.</li>
                 <li><strong>Scoring & Speed:</strong>
                     <ul>
-                        <li>Points are awarded based on the current display speed (faster speed = more points) and
-                            reduced by re-flashes.</li>
+                        <li>Points are awarded based on the current display speed (faster speed = more points).</li>
                         <li><strong>Perfect (All glyphs correct & in order):</strong> Max points for the round! Display
                             speed for the next round significantly decreases (gets faster).</li>
                         <li><strong>Correct glyphs, wrong order:</strong> Good points! Display speed moderately
                             decreases.</li>
                         <li><strong>Any incorrect glyph / Not all glyphs identified:</strong> No points for the round.
                             Display speed slightly increases (gets slower).</li>
+                        <li>Each re-flash reduces your score for the round by 20%.</li>
                     </ul>
                 </li>
-                <li><strong>Progression:</strong> After submitting your answer, click "Next Round" to continue.</li>
+                <li><strong>Progression:</strong> After submitting your answer, click <strong>Next Round</strong> to
+                    continue. There is no automatic progression.</li>
                 <li>The game continues, adapting the speed to your performance. Aim for precision and speed!</li>
             </ol>
         </div>
