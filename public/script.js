@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Leaderboard Functions ---
     async function fetchAndDisplayLeaderboard(difficultyKey = `d${currentLeaderboardDifficulty}`) {
-        if (!FIREBASE_DB_URL || FIREBASE_DB_URL === 'https://monkeyread-7082e-default-rtdb.europe-west1.firebasedatabase.app/') {
+        if (!FIREBASE_DB_URL || FIREBASE_DB_URL === 'FIREBASE_DB_URL_HERE') {
             leaderboardMessage.textContent = "Leaderboard not configured. Admin needs to set Firebase URL.";
             leaderboardList.innerHTML = '';
             return;
@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function submitScoreToLeaderboard(playerName, playerScore, gameDifficulty, playerAccuracy) {
-        if (!FIREBASE_DB_URL || FIREBASE_DB_URL === 'https://monkeyread-7082e-default-rtdb.europe-west1.firebasedatabase.app/') {
+        if (!FIREBASE_DB_URL || FIREBASE_DB_URL === 'FIREBASE_DB_URL_HERE') {
             console.warn("Firebase URL not configured. Score not submitted.");
             messageDisplay.textContent += " (Leaderboard not configured)";
             return;
