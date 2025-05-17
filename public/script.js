@@ -41,6 +41,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const minPracticalDisplaySpeed = 20; // Practical floor for setTimeout and perception
     const maxDisplaySpeed = 700; // A cap if speed gets too slow
 
+    // Color codes for flashing letters (1st: Red, 2nd: Green, 3rd: Blue)
+    const flashingLetterColors = [
+        '#F76E11', // Red (1st)
+        '#7AC74F', // Green (2nd)
+        '#43BCCD'  // Blue (3rd)
+    ];
+
     const defaultSpeedChangeOnCorrect = 25; // ms, base speed decrease for correct letters (wrong order)
     const perfectRoundSpeedBoost = 20;    // ms, additional speed decrease for perfect round
     const mistakeSpeedPenalty = 30;       // ms, speed increase on any error
@@ -79,26 +86,63 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Display Logic ---
-    async function displayLettersSequential() {
+    function displayLettersSequential() {
         lettersDisplayed = false;
         flashingLetterDisplay.style.visibility = 'hidden';
-        await new Promise(resolve => setTimeout(resolve, 300)); // Short pause before sequence
+        let phase = 'pauseBefore'; // 'pauseBefore', 'show', 'hide', 'done'
+        let letterIndex = 0;
+        let lastTimestamp = null;
+        let pauseBeforeMs = 300;
+        let pauseBetweenMs = Math.max(10, actualDisplaySpeed / 3);
+        let isPaused = false;
 
-        for (let i = 0; i < 3; i++) {
-            flashingLetterDisplay.textContent = currentLetters[i];
-            flashingLetterDisplay.style.visibility = 'visible';
-            await new Promise(resolve => setTimeout(resolve, actualDisplaySpeed));
-            flashingLetterDisplay.style.visibility = 'hidden';
-            if (i < 2) { // Pause between letters
-                await new Promise(resolve => setTimeout(resolve, Math.max(10, actualDisplaySpeed / 3)));
+        function step(now) {
+            if (!lastTimestamp) lastTimestamp = now;
+            let elapsed = now - lastTimestamp;
+
+            if (phase === 'pauseBefore') {
+                if (elapsed >= pauseBeforeMs) {
+                    phase = 'show';
+                    lastTimestamp = now;
+                    flashingLetterDisplay.textContent = currentLetters[letterIndex];
+                    // Set color based on position
+                    flashingLetterDisplay.style.color = flashingLetterColors[letterIndex];
+                    flashingLetterDisplay.style.visibility = 'visible';
+                }
+            } else if (phase === 'show') {
+                if (elapsed >= actualDisplaySpeed) {
+                    flashingLetterDisplay.style.visibility = 'hidden';
+                    phase = 'hide';
+                    lastTimestamp = now;
+                }
+            } else if (phase === 'hide') {
+                if (elapsed >= pauseBetweenMs) {
+                    letterIndex++;
+                    if (letterIndex < 3) {
+                        phase = 'show';
+                        flashingLetterDisplay.textContent = currentLetters[letterIndex];
+                        // Set color based on position
+                        flashingLetterDisplay.style.color = flashingLetterColors[letterIndex];
+                        flashingLetterDisplay.style.visibility = 'visible';
+                        lastTimestamp = now;
+                    } else {
+                        phase = 'done';
+                        flashingLetterDisplay.textContent = '';
+                        flashingLetterDisplay.style.visibility = 'hidden';
+                        inputArea.classList.remove('hidden');
+                        letterInputs.forEach(input => input.value = '');
+                        letterInputs[0].focus();
+                        submitButton.disabled = false;
+                        lettersDisplayed = true;
+                        return;
+                    }
+                }
+            }
+            if (phase !== 'done') {
+                requestAnimationFrame(step);
             }
         }
-        flashingLetterDisplay.textContent = ""; // Clear display
-        inputArea.classList.remove('hidden');
-        letterInputs.forEach(input => input.value = '');
-        letterInputs[0].focus();
-        submitButton.disabled = false;
-        lettersDisplayed = true;
+        requestAnimationFrame(step);
     }
 
     function startLetterLoop() {
@@ -106,14 +150,26 @@ document.addEventListener('DOMContentLoaded', () => {
         isLoopingActive = true;
         loopCounter = 0;
         flashingLetterDisplay.style.visibility = 'visible';
+        let lastTimestamp = null;
 
-        function showNextLoopLetter() {
+        function loopStep(now) {
             if (!isLoopingActive) return;
-            flashingLetterDisplay.textContent = currentLetters[loopCounter % 3];
-            loopCounter++;
+            if (!lastTimestamp) lastTimestamp = now;
+            let elapsed = now - lastTimestamp;
+            if (elapsed >= actualDisplaySpeed) {
+                flashingLetterDisplay.textContent = currentLetters[loopCounter % 3];
+                // Set color based on position
+                flashingLetterDisplay.style.color = flashingLetterColors[loopCounter % 3];
+                loopCounter++;
+                lastTimestamp = now;
+            }
+            requestAnimationFrame(loopStep);
         }
-        showNextLoopLetter(); // Show first letter immediately
-        loopIntervalId = setInterval(showNextLoopLetter, actualDisplaySpeed); // Use actualDisplaySpeed
+        flashingLetterDisplay.textContent = currentLetters[loopCounter % 3];
+        // Set color based on position
+        flashingLetterDisplay.style.color = flashingLetterColors[loopCounter % 3];
+        loopCounter++;
+        requestAnimationFrame(loopStep);
 
         inputArea.classList.remove('hidden');
         letterInputs.forEach(input => input.value = '');
@@ -122,7 +178,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function stopLetterLoop() {
-        if (loopIntervalId) clearInterval(loopIntervalId);
         isLoopingActive = false;
     }
 
