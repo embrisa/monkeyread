@@ -38,14 +38,24 @@
 
         <div id="controls-area">
             <button id="start-button" class="button button-primary">Start Game</button>
-            <button id="next-round-button" class="button button-secondary hidden">Next Round</button>
-            <div id="next-round-hint" style="display:none"></div>
             <button id="reflash-button" class="button button-secondary" type="button">Re-flash Letters</button>
         </div>
 
         <div id="letter-display-area" aria-live="polite" aria-atomic="true">
             <span id="flashing-letter"></span>
         </div>
+
+        <div id="feedback-area">
+            <p id="message" aria-live="polite" aria-atomic="true"></p>
+            <div id="player-name-submission-area" class="hidden">
+                <input type="text" id="player-name-input" placeholder="Enter your name (3-10 chars)" maxlength="10"
+                    minlength="3">
+                <button id="submit-score-button" class="button button-secondary">Submit to Leaderboard</button>
+            </div>
+        </div>
+
+        <div id="next-round-hint"></div>
+
         <p id="pause-countdown-display" aria-live="polite" aria-atomic="true"></p>
 
         <div id="countdown-area">
@@ -60,43 +70,39 @@
             <button id="submit-button" class="button button-submit">Submit Answer</button>
         </div>
 
-        <div id="feedback-area">
-            <p id="message" aria-live="polite" aria-atomic="true"></p>
-        </div>
-
         <div id="score-area">
             <p>Round: <span id="current-level" aria-live="polite">1</span></p>
             <p>Score: <span id="current-score" aria-live="polite">0</span></p>
             <p>Accuracy: <span id="accuracy-rating" aria-live="polite">100%</span></p>
             <p>Time: <span id="current-speed" aria-live="polite">N/A</span> ms</p>
             <p>Total Time: <span id="total-time" aria-live="polite">N/A</span> ms</p>
+            <p>Effective Hz: <span id="effective-hz-display" aria-live="polite">N/A</span></p>
         </div>
 
         <div id="instructions">
             <h2>How to Play Monkeyread</h2>
             <ol>
-                <li>Select your Difficulty.</li>
-                <li>Click "Start Game". Letters will flash in bold black on a white background. Pay attention
-                    to their order!</li>
-                <li>Enter the letters you saw into the input boxes in the correct order. All letters and inputs are
-                    high-contrast for easy reading.</li>
-                <li><strong>Re-flash:</strong> If you need to see the sequence again, click the <strong>Re-flash
-                        Letters</strong> button. Each re-flash reduces your potential score for the round by 20%.</li>
-                <li><strong>Scoring & Time:</strong>
-                    <ul>
-                        <li>Points are awarded based on the current display time (faster time = more points).</li>
-                        <li><strong>Perfect (All letters correct & in order):</strong> Max points for the round! Display
-                            time for the next round significantly decreases (gets faster).</li>
-                        <li><strong>Correct letters, wrong order:</strong> Good points! Display time moderately
-                            decreases.</li>
-                        <li><strong>Any incorrect letter / Not all letters identified:</strong> No points for the round.
-                            Display time slightly increases (gets slower).</li>
-                        <li>Each re-flash reduces your score for the round by 20%.</li>
-                    </ul>
-                </li>
-                <li><strong>Progression:</strong> After submitting your answer, click <strong>Next Round</strong> to
-                    continue. There is no automatic progression.</li>
-                <li>The game continues, adapting the speed to your performance. Aim for precision and speed!</li>
+                <li>Click <strong>Start Game</strong>.</li>
+                <li>Watch the letters flash on the screen.</li>
+                <li>Type the letters you saw into the boxes.</li>
+                <li>Click <strong>Submit Answer</strong>.</li>
+                <li>If you miss, you can click <strong>Re-flash Letters</strong> to see them again (but your score for
+                    that round will be lower!).</li>
+                <li>The game gets faster if you do well, and slower if you make mistakes.</li>
+                <li>Click <strong>Next Round</strong> (or press Enter) to keep playing.</li>
+                <li>Try to get the highest score in 16 rounds!</li>
+            </ol>
+        </div>
+
+        <div id="leaderboard-container" class="container">
+            <h2>🏆 Leaderboard ��</h2>
+            <div id="leaderboard-difficulty-selector">
+                <!-- Difficulty selection buttons will be added here by JS -->
+                <span class="selector-label">Difficulty:</span>
+            </div>
+            <p id="leaderboard-message">Select a difficulty to view scores.</p>
+            <ol id="leaderboard-list">
+                <!-- Scores will be populated by JavaScript -->
             </ol>
         </div>
     </div>

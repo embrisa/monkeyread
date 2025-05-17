@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const flashingLetterDisplay = document.getElementById('flashing-letter');
     const startButton = document.getElementById('start-button');
-    const nextRoundButton = document.getElementById('next-round-button');
     const submitButton = document.getElementById('submit-button');
     const inputArea = document.getElementById('input-area');
     const letterInputsWrapper = document.getElementById('letter-inputs-wrapper');
@@ -17,59 +16,244 @@ document.addEventListener('DOMContentLoaded', () => {
     const reflashButton = document.getElementById('reflash-button');
     const accuracyRatingDisplay = document.getElementById('accuracy-rating');
     const pauseCountdownDisplay = document.getElementById('pause-countdown-display');
-    // --- Total Time Tracking ---
-    let gameStartTime = null;
-    let lastRoundEndTime = null;
+    const nextRoundHint = document.getElementById('next-round-hint');
+
     const totalTimeDisplay = document.getElementById('total-time');
+    const effectiveHzDisplay = document.getElementById('effective-hz-display');
+
+    // Leaderboard Elements
+    const leaderboardContainer = document.getElementById('leaderboard-container');
+    const leaderboardList = document.getElementById('leaderboard-list');
+    const leaderboardMessage = document.getElementById('leaderboard-message');
+    const playerNameSubmissionArea = document.getElementById('player-name-submission-area');
+    const playerNameInput = document.getElementById('player-name-input');
+    const submitScoreButton = document.getElementById('submit-score-button');
+
+    // Leaderboard Difficulty Selector
+    const leaderboardDifficultySelector = document.getElementById('leaderboard-difficulty-selector');
+    let currentLeaderboardDifficulty = 1; // Default to difficulty 1
+
+    // IMPORTANT: Replace with your Firebase Realtime Database URL
+    const FIREBASE_DB_URL = 'YOUR_FIREBASE_DATABASE_URL_HERE';
+    const MAX_LEADERBOARD_ENTRIES = 10;
 
     // Game State Variables
     let currentLetters = [];
     let currentRound = 1;
     let score = 0;
     let gameActive = false;
-    let lettersDisplayed = false;
-    let numberOfLettersToDisplay = 3;
+    let numberOfLettersToDisplay = 3; // This is set by difficulty slider
     let reflashCount = 0;
-    let reflashTimeoutId = null;
     let flashCycleActive = false;
     // --- Accuracy Tracking ---
     let totalLettersAttempted = 0;
     let totalLettersCorrect = 0;
+    let overallGameAccuracy = 0; // To be calculated at game end
 
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-    // Timers and Intervals
-    let loopIntervalId = null;
-    let isLoopingActive = false;
-    let loopCounter = 0;
-    let countdownIntervalId = null;
-
     // --- Dynamic Speed and Scoring Logic ---
-    let actualDisplaySpeed = 300; // This will be dynamically adjusted
-    const initialDisplaySpeed = 300; // Base speed to start and for score calculation reference
-    const minPracticalDisplaySpeed = 20; // Practical floor for setTimeout and perception
-    const maxDisplaySpeed = 700; // A cap if speed gets too slow
+    const initialDisplaySpeed = 150;    // ms,
+    const maxDisplaySpeed = 700;        // A cap if speed gets too slow
 
-    // Color codes for flashing letters (1st: Red, 2nd: Green, 3rd: Blue)
-    const flashingLetterColors = [
-        '#FF2D2D', // Vivid Red (1st)
-        '#16C172', // Darker Green (2nd)
-        '#2D9CFF'  // Vivid Blue (3rd)
-    ];
+    // New speed change constants
+    const speedDecreasePerfect = 20;     // ms, speed decrease for a perfect round
+    const speedDecreaseCorrectOrder = 15;// ms, speed decrease for correct letters, wrong order
+    const mistakeSpeedPenalty = 10;      // ms, speed increase on any error
 
-    const defaultSpeedChangeOnCorrect = 25; // ms, base speed decrease for correct letters (wrong order)
-    const perfectRoundSpeedBoost = 20;    // ms, additional speed decrease for perfect round
-    const mistakeSpeedPenalty = 30;       // ms, speed increase on any error
+    // New Scoring Point Constants
+    const POINTS_CORRECT_POSITION = 5;
+    const POINTS_CORRECT_WRONG_POSITION = 2;
+    const POINTS_PERFECT_ORDER_BONUS = 10; // For a perfect round, on top of per-letter points
 
-    const basePointsPerLetter = 5;       // Base points before speed multiplier
-    const orderBonusBasePoints = 10;     // Base bonus points before speed multiplier
+    const MAX_ROUNDS = 16; // Maximum number of rounds per game
 
-    // Get the next round hint element (now always present in HTML)
-    const nextRoundHint = document.getElementById('next-round-hint');
+    // Initialize actualDisplaySpeed. It's set in startGame for game rounds,
+    // but needs a defined value for UI updates before game starts (e.g., initial Total Time display).
+    let actualDisplaySpeed = initialDisplaySpeed;
+    let minPracticalDisplaySpeed = 16; // ms, Default to 16ms (good for 60Hz), will be dynamically updated by estimateFrameInterval.
+    const ABSOLUTE_MIN_SPEED_ALLOWED = 8; // ms, absolute floor for display speed for very high refresh rate monitors
+
+    // --- Leaderboard Functions ---
+    async function fetchAndDisplayLeaderboard(difficultyKey = `d${currentLeaderboardDifficulty}`) {
+        if (!FIREBASE_DB_URL || FIREBASE_DB_URL === 'https://monkeyread-7082e-default-rtdb.europe-west1.firebasedatabase.app/') {
+            leaderboardMessage.textContent = "Leaderboard not configured. Admin needs to set Firebase URL.";
+            leaderboardList.innerHTML = '';
+            return;
+        }
+        leaderboardMessage.textContent = `Loading scores for Difficulty ${difficultyKey.substring(1)}...`;
+        leaderboardList.innerHTML = ''; // Clear previous scores
+
+        try {
+            const dynamicPath = `/leaderboards/${difficultyKey}/scores.json`;
+            const response = await fetch(`${FIREBASE_DB_URL}${dynamicPath}?orderBy="score"&limitToLast=${MAX_LEADERBOARD_ENTRIES}`);
+            if (!response.ok) {
+                if (response.status === 404) { // Handle cases where a difficulty level might not have scores yet
+                    leaderboardMessage.textContent = `No scores yet for Difficulty ${difficultyKey.substring(1)}. Be the first!`;
+                    return;
+                }
+                throw new Error(`Firebase fetch error: ${response.status} ${response.statusText} for path ${dynamicPath}`);
+            }
+            const scoresData = await response.json();
+
+            if (!scoresData || Object.keys(scoresData).length === 0) {
+                leaderboardMessage.textContent = `No scores yet for Difficulty ${difficultyKey.substring(1)}. Be the first!`;
+                return;
+            }
+
+            const scoresArray = Object.values(scoresData)
+                .sort((a, b) => b.score - a.score)
+                .slice(0, MAX_LEADERBOARD_ENTRIES);
+
+            if (scoresArray.length === 0) {
+                leaderboardMessage.textContent = `No scores yet for Difficulty ${difficultyKey.substring(1)}. Be the first!`;
+                return;
+            }
+
+            leaderboardMessage.textContent = `Top Scores - Difficulty ${difficultyKey.substring(1)}:`;
+            scoresArray.forEach((entry, index) => {
+                const listItem = document.createElement('li');
+                const displayName = entry.name ? entry.name.replace(/</g, "&lt;").replace(/>/g, "&gt;") : "Anonymous";
+                const accuracyDisplay = entry.accuracy ? entry.accuracy.toFixed(1) + '%' : 'N/A';
+                listItem.innerHTML = `<span>${index + 1}. ${displayName}</span> - ${entry.score} pts (Acc: ${accuracyDisplay})`;
+                leaderboardList.appendChild(listItem);
+            });
+
+        } catch (error) {
+            console.error('Error fetching leaderboard:', error);
+            leaderboardMessage.textContent = "Could not load leaderboard. Check console.";
+        }
+    }
+
+    async function submitScoreToLeaderboard(playerName, playerScore, gameDifficulty, playerAccuracy) {
+        if (!FIREBASE_DB_URL || FIREBASE_DB_URL === 'YOUR_FIREBASE_DATABASE_URL_HERE') {
+            console.warn("Firebase URL not configured. Score not submitted.");
+            messageDisplay.textContent += " (Leaderboard not configured)";
+            return;
+        }
+
+        const difficultyKey = `d${gameDifficulty}`;
+        const scoreEntry = {
+            name: playerName,
+            score: playerScore,
+            accuracy: parseFloat(playerAccuracy.toFixed(2)), // Store accuracy as a number
+            timestamp: new Date().toISOString()
+            // gameDifficulty is now part of the path, not stored in the object itself unless desired for other reasons
+        };
+
+        try {
+            const dynamicPath = `/leaderboards/${difficultyKey}/scores.json`;
+            const response = await fetch(`${FIREBASE_DB_URL}${dynamicPath}`, {
+                method: 'POST',
+                body: JSON.stringify(scoreEntry),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                throw new Error(`Firebase submit error: ${response.status} for path ${dynamicPath}`);
+            }
+            console.log('Score submitted successfully!');
+            currentLeaderboardDifficulty = gameDifficulty; // Switch to the difficulty the score was submitted for
+            updateLeaderboardDifficultySelectorUI();
+            fetchAndDisplayLeaderboard(`d${gameDifficulty}`); // Refresh leaderboard for the submitted difficulty
+            playerNameSubmissionArea.classList.add('hidden');
+        } catch (error) {
+            console.error('Error submitting score:', error);
+            messageDisplay.textContent += " (Score submission failed)";
+        }
+    }
+
+    function createLeaderboardDifficultySelector() {
+        if (!leaderboardDifficultySelector) return;
+        // Clear existing buttons except the label
+        const label = leaderboardDifficultySelector.querySelector('.selector-label');
+        leaderboardDifficultySelector.innerHTML = '';
+        if (label) leaderboardDifficultySelector.appendChild(label);
+
+        for (let i = 1; i <= 7; i++) { // Assuming max difficulty 7
+            const button = document.createElement('button');
+            button.textContent = `${i}`;
+            button.classList.add('button', 'button-difficulty-select');
+            if (i === currentLeaderboardDifficulty) {
+                button.classList.add('active');
+            }
+            button.dataset.difficulty = i;
+            button.addEventListener('click', (e) => {
+                const selectedDiff = parseInt(e.target.dataset.difficulty, 10);
+                currentLeaderboardDifficulty = selectedDiff;
+                updateLeaderboardDifficultySelectorUI();
+                fetchAndDisplayLeaderboard(`d${selectedDiff}`);
+            });
+            leaderboardDifficultySelector.appendChild(button);
+        }
+    }
+
+    function updateLeaderboardDifficultySelectorUI() {
+        const buttons = leaderboardDifficultySelector.querySelectorAll('.button-difficulty-select');
+        buttons.forEach(btn => {
+            if (parseInt(btn.dataset.difficulty, 10) === currentLeaderboardDifficulty) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
 
     // --- Utility Functions ---
     function getRandomLetter() {
         return alphabet[Math.floor(Math.random() * alphabet.length)];
+    }
+
+    function estimateFrameInterval(callback) {
+        const samples = [];
+        const totalSamplesToCollect = 20; // Collect timestamps of 20 frames, yielding 19 intervals
+
+        function frameSampler(timestamp) {
+            samples.push(timestamp);
+            if (samples.length < totalSamplesToCollect) {
+                requestAnimationFrame(frameSampler);
+            } else {
+                // We have enough samples, calculate average interval
+                let totalIntervalTime = 0;
+                let validIntervals = 0;
+                for (let i = 1; i < samples.length; i++) {
+                    const interval = samples[i] - samples[i - 1];
+                    // Sanity check for each interval (e.g., 4ms to 100ms, covering ~10Hz to 250Hz)
+                    if (interval >= 4 && interval < 100) {
+                        totalIntervalTime += interval;
+                        validIntervals++;
+                    }
+                }
+
+                if (validIntervals > totalSamplesToCollect / 2) { // Require at least half valid intervals
+                    const averageInterval = totalIntervalTime / validIntervals;
+                    estimatedFrameIntervalMs = averageInterval;
+
+                    // Sanity check the average interval (e.g., 5ms to 40ms, covering ~25Hz to 200Hz - typical gaming range)
+                    if (averageInterval >= 4 && averageInterval <= 40) {
+                        let currentFrameTargetSpeed = Math.round(averageInterval);
+
+                        // If display is roughly 60Hz (interval results in 16ms or 17ms rounded), target 16ms.
+                        if (currentFrameTargetSpeed >= 16 && currentFrameTargetSpeed <= 17) {
+                            minPracticalDisplaySpeed = 16;
+                        } else {
+                            // For other refresh rates: use frame interval, floored by ABSOLUTE_MIN_SPEED_ALLOWED, capped at 20ms.
+                            minPracticalDisplaySpeed = Math.max(ABSOLUTE_MIN_SPEED_ALLOWED, Math.min(currentFrameTargetSpeed, 20));
+                        }
+                        console.log(`Estimated display frame interval: ${averageInterval.toFixed(2)}ms over ${validIntervals} samples. Min practical display speed set to: ${minPracticalDisplaySpeed}ms.`);
+                    } else {
+                        minPracticalDisplaySpeed = 16; // Fallback if average is out of typical gaming/monitor range
+                        console.warn(`Average estimated frame interval (${averageInterval.toFixed(2)}ms) out of expected range (5-40ms). Using default min speed: ${minPracticalDisplaySpeed}ms.`);
+                    }
+                } else {
+                    minPracticalDisplaySpeed = 16; // Fallback if not enough valid samples
+                    console.warn(`Could not reliably estimate frame interval (not enough valid samples: ${validIntervals}/${samples.length - 1}). Using default min speed: ${minPracticalDisplaySpeed}ms.`);
+                }
+                if (callback) callback();
+            }
+        }
+        requestAnimationFrame(frameSampler); // Start sampling
     }
 
     function generateLetters(numLetters = numberOfLettersToDisplay) {
@@ -106,6 +290,82 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Display Logic ---
+    function startCountdown(duration, displayElement, onCompleteCallback) {
+        let startTimestamp = null;
+        flashingLetterDisplay.textContent = ''; // Clear main display during countdown
+        flashingLetterDisplay.style.visibility = 'hidden';
+        if (displayElement) displayElement.textContent = (duration / 1000).toFixed(3) + 's';
+
+        function countdownStep(now) {
+            if (!startTimestamp) startTimestamp = now;
+            let elapsed = now - startTimestamp;
+            let remaining = Math.max(0, duration - elapsed);
+
+            if (displayElement) {
+                displayElement.textContent = (remaining / 1000).toFixed(3) + 's';
+            }
+
+            if (remaining > 0) {
+                requestAnimationFrame(countdownStep);
+            } else {
+                if (displayElement) displayElement.textContent = "";
+                if (onCompleteCallback) onCompleteCallback();
+            }
+        }
+        requestAnimationFrame(countdownStep);
+    }
+
+    function flashLettersSequence(callback) {
+        let letterIndex = 0;
+        let phase = 'pauseBefore';
+        let lastTimestamp = null;
+        let pauseBeforeMs = 300;
+        let pauseBetweenMs = Math.max(10, actualDisplaySpeed / 3);
+
+        function step(now) {
+            if (!flashCycleActive) return;
+            if (!lastTimestamp) lastTimestamp = now;
+            let elapsed = now - lastTimestamp;
+
+            if (phase === 'pauseBefore') {
+                if (elapsed >= pauseBeforeMs) {
+                    phase = 'show';
+                    lastTimestamp = now;
+                    flashingLetterDisplay.textContent = currentLetters[letterIndex];
+                    flashingLetterDisplay.style.color = '#111';
+                    flashingLetterDisplay.style.visibility = 'visible';
+                }
+            } else if (phase === 'show') {
+                if (elapsed >= actualDisplaySpeed) {
+                    flashingLetterDisplay.style.visibility = 'hidden';
+                    phase = 'hide';
+                    lastTimestamp = now;
+                }
+            } else if (phase === 'hide') {
+                if (elapsed >= pauseBetweenMs) {
+                    letterIndex++;
+                    if (letterIndex < currentLetters.length) {
+                        phase = 'show';
+                        flashingLetterDisplay.textContent = currentLetters[letterIndex];
+                        flashingLetterDisplay.style.color = '#111';
+                        flashingLetterDisplay.style.visibility = 'visible';
+                        lastTimestamp = now;
+                    } else {
+                        phase = 'done';
+                        flashingLetterDisplay.textContent = '';
+                        flashingLetterDisplay.style.visibility = 'hidden';
+                        if (callback) callback();
+                        return;
+                    }
+                }
+            }
+            if (phase !== 'done') {
+                requestAnimationFrame(step);
+            }
+        }
+        requestAnimationFrame(step);
+    }
+
     function manageFlashAndInputCycle() {
         // Core loop: flash N letters, then input area is shown, re-flash is manual
         flashCycleActive = true;
@@ -115,57 +375,6 @@ document.addEventListener('DOMContentLoaded', () => {
         flashingLetterDisplay.textContent = '';
         flashingLetterDisplay.style.visibility = 'hidden';
         letterInputs.forEach(input => input.value = '');
-
-        function flashLettersSequence(callback) {
-            let letterIndex = 0;
-            let phase = 'pauseBefore';
-            let lastTimestamp = null;
-            let pauseBeforeMs = 300;
-            let pauseBetweenMs = Math.max(10, actualDisplaySpeed / 3);
-
-            function step(now) {
-                if (!flashCycleActive) return;
-                if (!lastTimestamp) lastTimestamp = now;
-                let elapsed = now - lastTimestamp;
-
-                if (phase === 'pauseBefore') {
-                    if (elapsed >= pauseBeforeMs) {
-                        phase = 'show';
-                        lastTimestamp = now;
-                        flashingLetterDisplay.textContent = currentLetters[letterIndex];
-                        flashingLetterDisplay.style.color = '#111';
-                        flashingLetterDisplay.style.visibility = 'visible';
-                    }
-                } else if (phase === 'show') {
-                    if (elapsed >= actualDisplaySpeed) {
-                        flashingLetterDisplay.style.visibility = 'hidden';
-                        phase = 'hide';
-                        lastTimestamp = now;
-                    }
-                } else if (phase === 'hide') {
-                    if (elapsed >= pauseBetweenMs) {
-                        letterIndex++;
-                        if (letterIndex < currentLetters.length) {
-                            phase = 'show';
-                            flashingLetterDisplay.textContent = currentLetters[letterIndex];
-                            flashingLetterDisplay.style.color = '#111';
-                            flashingLetterDisplay.style.visibility = 'visible';
-                            lastTimestamp = now;
-                        } else {
-                            phase = 'done';
-                            flashingLetterDisplay.textContent = '';
-                            flashingLetterDisplay.style.visibility = 'hidden';
-                            if (callback) callback();
-                            return;
-                        }
-                    }
-                }
-                if (phase !== 'done') {
-                    requestAnimationFrame(step);
-                }
-            }
-            requestAnimationFrame(step);
-        }
 
         function afterFlashShowInput() {
             if (!flashCycleActive) return;
@@ -179,18 +388,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleReflashRequest() {
         if (!gameActive || reflashButton.disabled) return;
+
+        // Set necessary states for flashing
+        flashCycleActive = true; // flashLettersSequence relies on this
         reflashCount++;
         submitButton.disabled = true;
         reflashButton.disabled = true;
-        flashingLetterDisplay.textContent = '';
+        flashingLetterDisplay.textContent = ''; // Clear display before countdown/flash
         flashingLetterDisplay.style.visibility = 'hidden';
-        function afterFlashShowInput() {
-            if (!flashCycleActive) return;
+
+        // Define what happens after the re-flash letter sequence itself completes
+        function afterReflashSequenceCompletes() {
+            if (!flashCycleActive) return; // Good practice to check
             submitButton.disabled = false;
             reflashButton.disabled = false;
             if (letterInputs.length > 0) letterInputs[0].focus();
         }
-        flashLettersSequence(afterFlashShowInput);
+
+        // Define what happens after the 1-second countdown completes for a re-flash
+        function onReflashCountdownEnd() {
+            flashingLetterDisplay.textContent = ''; // Ensure it's still clear before flash
+            flashingLetterDisplay.style.visibility = 'hidden';
+            flashLettersSequence(afterReflashSequenceCompletes); // Now call the flasher
+        }
+
+        // Start the 1-second countdown, then trigger the flashing sequence
+        startCountdown(1000, pauseCountdownDisplay, onReflashCountdownEnd);
     }
 
     function stopFlashCycle() {
@@ -203,126 +426,131 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Game Flow & UI Updates ---
     function updateDisplays() {
-        currentLevelDisplay.textContent = currentRound;
+        currentLevelDisplay.textContent = `${currentRound} / ${MAX_ROUNDS}`;
         currentScoreDisplay.textContent = score;
         currentSpeedDisplay.textContent = gameActive ? actualDisplaySpeed : "N/A";
-        // Update accuracy rating
         if (totalLettersAttempted === 0) {
             accuracyRatingDisplay.textContent = '100%';
         } else {
-            // Show to one decimal if not integer
             let percent = (totalLettersCorrect / totalLettersAttempted) * 100;
             accuracyRatingDisplay.textContent = (percent % 1 === 0 ? Math.round(percent) : percent.toFixed(1)) + '%';
+        }
+        if (effectiveHzDisplay) {
+            if (gameActive && actualDisplaySpeed > 0) {
+                const effectiveHz = 1000 / actualDisplaySpeed;
+                effectiveHzDisplay.textContent = `${effectiveHz.toFixed(2)} Hz`;
+            } else {
+                effectiveHzDisplay.textContent = "N/A";
+            }
         }
         updateTotalTimeDisplay();
     }
 
     function updateTotalTimeDisplay() {
-        if (gameStartTime && lastRoundEndTime) {
-            const elapsed = Math.round(lastRoundEndTime - gameStartTime);
-            totalTimeDisplay.textContent = elapsed;
+        // Total time for the round = number of letters * actualDisplaySpeed (in ms)
+        const totalMs = numberOfLettersToDisplay * actualDisplaySpeed;
+        if (totalMs >= 1000) {
+            totalTimeDisplay.textContent = (totalMs / 1000).toFixed(3) + ' s';
         } else {
-            totalTimeDisplay.textContent = "N/A";
+            totalTimeDisplay.textContent = totalMs + ' ms';
+        }
+    }
+
+    // Helper to set submitButton as 'Submit Answer' or 'Next Round'
+    function setSubmitButtonMode(mode) {
+        if (mode === 'submit') {
+            submitButton.textContent = 'Submit Answer';
+            submitButton.disabled = false;
+            submitButton.onclick = handleAnswerSubmitted;
+        } else if (mode === 'next') {
+            submitButton.textContent = 'Next Round';
+            submitButton.disabled = false;
+            submitButton.onclick = function () {
+                if (gameActive) {
+                    countdownMessageDisplay.textContent = "";
+                    advanceToNextRound();
+                }
+            };
         }
     }
 
     function resetUIForNewRound() {
-        messageDisplay.textContent = "";
-        messageDisplay.className = "";
         countdownMessageDisplay.textContent = "";
-        if (pauseCountdownDisplay) pauseCountdownDisplay.textContent = "";
-        nextRoundButton.classList.add('hidden');
         submitButton.disabled = true;
+        submitButton.textContent = 'Submit Answer';
+        submitButton.onclick = handleAnswerSubmitted;
         reflashButton.disabled = true;
         flashingLetterDisplay.textContent = "";
         flashingLetterDisplay.style.visibility = 'hidden';
-        if (countdownIntervalId) clearInterval(countdownIntervalId);
         stopFlashCycle();
         reflashCount = 0;
-        showNextRoundHint(false);
         updateTotalTimeDisplay();
+        if (nextRoundHint) nextRoundHint.classList.remove('visible-hint');
     }
 
     function startGame() {
         gameActive = true;
-        resetUIForNewRound(); // Use the round reset
+        resetUIForNewRound();
+        messageDisplay.textContent = "";
+        messageDisplay.className = "";
         currentRound = 1;
         score = 0;
-        actualDisplaySpeed = initialDisplaySpeed; // Reset speed to initial
-        // Reset accuracy stats
+        actualDisplaySpeed = initialDisplaySpeed;
         totalLettersAttempted = 0;
         totalLettersCorrect = 0;
-        gameStartTime = performance.now();
-        lastRoundEndTime = null;
         updateDisplays();
         updateTotalTimeDisplay();
         startButton.textContent = "Restart Game";
+        difficultySlider.disabled = true;
         proceedToNextRoundSetup();
     }
 
-    function advanceToNextRound() { // Renamed from advanceLevel
+    function advanceToNextRound() {
         currentRound++;
-        // actualDisplaySpeed is adjusted in handleAnswerSubmitted, not here directly by level
-        updateDisplays(); // Update round number
+        updateDisplays();
         proceedToNextRoundSetup();
     }
 
     function proceedToNextRoundSetup() {
         resetUIForNewRound();
         generateLetters();
-        currentSpeedDisplay.textContent = actualDisplaySpeed; // Ensure speed is updated for this round
-        // Add visible 1 second pause before flashing letters
-        let countdownDuration = 1000; // 1 second
-        let startTimestamp = null;
-        // Hide the flashing letter display during the pause
-        flashingLetterDisplay.textContent = '';
-        flashingLetterDisplay.style.visibility = 'hidden';
-        if (pauseCountdownDisplay) pauseCountdownDisplay.textContent = (countdownDuration / 1000).toFixed(3) + 's';
-
-        function countdownStep(now) {
-            if (!startTimestamp) startTimestamp = now;
-            let elapsed = now - startTimestamp;
-            let remaining = Math.max(0, countdownDuration - elapsed);
-
-            if (pauseCountdownDisplay) {
-                pauseCountdownDisplay.textContent = (remaining / 1000).toFixed(3) + 's';
-            }
-
-            if (remaining > 0) {
-                requestAnimationFrame(countdownStep);
-            } else {
-                if (pauseCountdownDisplay) pauseCountdownDisplay.textContent = "";
-                flashingLetterDisplay.textContent = '';
-                flashingLetterDisplay.style.visibility = 'hidden';
-                manageFlashAndInputCycle();
-            }
+        currentSpeedDisplay.textContent = actualDisplaySpeed;
+        function onNewRoundCountdownEnd() {
+            messageDisplay.textContent = "";
+            messageDisplay.className = "";
+            manageFlashAndInputCycle();
         }
-        requestAnimationFrame(countdownStep);
+        startCountdown(1000, pauseCountdownDisplay, onNewRoundCountdownEnd);
     }
 
     function calculateSpeedDecrease(isPerfect, speed, minSpeed) {
-        if (speed > 100) {
-            // Use original values above 100ms
-            return isPerfect ? (defaultSpeedChangeOnCorrect + perfectRoundSpeedBoost) : defaultSpeedChangeOnCorrect;
-        } else if (speed > 50) {
-            // 100ms >= speed > 50ms
-            if (isPerfect) {
-                // 20ms at 100ms, 10ms at 50ms
-                return 10 + 10 * (speed - 50) / 50;
-            } else {
-                // 10ms at 100ms, 5ms at 50ms
-                return 5 + 5 * (speed - 50) / 50;
-            }
-        } else {
-            // 50ms >= speed >= minPracticalDisplaySpeed
-            if (isPerfect) {
-                // 12ms at 50ms, 5ms at min
-                return 5 + 7 * (speed - minSpeed) / (50 - minSpeed);
-            } else {
-                // 7ms at 50ms, 1ms at min
-                return 1 + 6 * (speed - minSpeed) / (50 - minSpeed);
-            }
+        const baseDecrease = isPerfect ? speedDecreasePerfect : speedDecreaseCorrectOrder;
+
+        if (speed <= minSpeed) return 1; // Minimal change if at or below floor
+
+        // If speed is significantly > initialDisplaySpeed (e.g., after many mistakes), apply baseDecrease directly.
+        // This ensures that player can recover speed even if it has become very slow.
+        if (speed > initialDisplaySpeed + (mistakeSpeedPenalty * 2)) { // e.g., > 100 + 20 = 120ms
+            return baseDecrease;
         }
+
+        // Scale decrease between initialDisplaySpeed and minSpeed
+        const speedRange = initialDisplaySpeed - minSpeed; // e.g., 100 - 20 = 80
+
+        // If initialDisplaySpeed is somehow less than or equal to minSpeed, return a small fixed decrease.
+        if (speedRange <= 0) return Math.max(1, Math.round(baseDecrease / 4));
+
+        // currentProgressInScaling goes from 0 (at minSpeed) to 1 (at initialDisplaySpeed)
+        // We clamp speed to be within [minSpeed, initialDisplaySpeed] for this scaling calculation
+        // to avoid negative progress or progress > 1 if speed is outside this typical 'good performance' range.
+        const clampedSpeed = Math.max(minSpeed, Math.min(speed, initialDisplaySpeed));
+        const currentProgressInScaling = (clampedSpeed - minSpeed) / speedRange;
+
+        // Define minimum meaningful decrease factor, e.g., 25% of baseDecrease at minSpeed
+        const minDecreaseFactor = 0.25; // So, at minSpeed, decrease is 25% of baseDecrease
+        const scaledDecrease = baseDecrease * (minDecreaseFactor + (1 - minDecreaseFactor) * currentProgressInScaling);
+
+        return Math.max(1, Math.round(scaledDecrease));
     }
 
     function handleAnswerSubmitted() {
@@ -330,113 +558,510 @@ document.addEventListener('DOMContentLoaded', () => {
         flashingLetterDisplay.style.visibility = 'hidden';
         flashingLetterDisplay.textContent = "";
         reflashButton.disabled = true;
-
         const userGuess = letterInputs.map(input => input.value.toUpperCase().trim());
-
         if (userGuess.some(letter => letter.length !== 1 || !alphabet.includes(letter))) {
             messageDisplay.textContent = "Please enter a valid single letter in all boxes.";
             messageDisplay.className = "incorrect";
             if (gameActive) submitButton.disabled = false;
+            reflashButton.disabled = !gameActive;
             return;
         }
-
         submitButton.disabled = true;
+        let numCorrectInPosition = 0;
+        let numCorrectWrongPosition = 0;
+        let completelyIncorrectTyped = 0; // Guessed letters NOT in currentLetters at all
 
-        // --- Accuracy Calculation ---
-        totalLettersAttempted += userGuess.length;
-        let correctThisRound = 0;
-        // Award 1 point for each letter in the correct position, 0.5 for correct letter in wrong position, 0 for incorrect
-        let usedIndices = new Set();
+        let currentRoundBaseScore = 0; // Score before multipliers
+        let feedbackMessage = "";
+        let reflashPenaltyMessage = "";
+
+        const tempCurrentLetters = [...currentLetters]; // Modifiable copy for matching
+        const guessStatus = userGuess.map(() => ({ matchedCorrectLetter: false, inCorrectPosition: false }));
+
+        // Pass 1: Check for correct letters in correct positions
         for (let i = 0; i < userGuess.length; i++) {
-            if (userGuess[i] === currentLetters[i]) {
-                correctThisRound += 1;
-                usedIndices.add(i);
+            if (i < tempCurrentLetters.length && userGuess[i] === tempCurrentLetters[i]) {
+                numCorrectInPosition++;
+                currentRoundBaseScore += POINTS_CORRECT_POSITION;
+                tempCurrentLetters[i] = null; // Mark as matched in correct position
+                guessStatus[i].matchedCorrectLetter = true;
+                guessStatus[i].inCorrectPosition = true;
             }
         }
-        // For remaining user guesses, if correct letter but wrong position (and not already matched)
+
+        // Pass 2: Check for correct letters in wrong positions
         for (let i = 0; i < userGuess.length; i++) {
-            if (userGuess[i] !== currentLetters[i] && currentLetters.includes(userGuess[i])) {
-                // Only count if this letter hasn't already been matched in the correct position
-                for (let j = 0; j < currentLetters.length; j++) {
-                    if (!usedIndices.has(j) && currentLetters[j] === userGuess[i]) {
-                        correctThisRound += 0.5;
-                        usedIndices.add(j);
-                        break;
-                    }
+            if (!guessStatus[i].inCorrectPosition && i < currentLetters.length) { // Only consider if not already awarded for correct position
+                const indexInTemp = tempCurrentLetters.indexOf(userGuess[i]);
+                if (indexInTemp !== -1) {
+                    numCorrectWrongPosition++;
+                    currentRoundBaseScore += POINTS_CORRECT_WRONG_POSITION;
+                    tempCurrentLetters[indexInTemp] = null; // Mark as matched in wrong position
+                    guessStatus[i].matchedCorrectLetter = true;
                 }
             }
         }
-        totalLettersCorrect += correctThisRound;
 
-        let roundScore = 0;
-        let feedbackMessage = "";
-        let speedChangeMessage = "";
-        let reflashPenaltyMessage = "";
+        // Count letters guessed by user that were not in the sequence at all
+        for (let i = 0; i < userGuess.length; i++) {
+            if (!guessStatus[i].matchedCorrectLetter) {
+                completelyIncorrectTyped++;
+            }
+        }
 
-        // Check for any letter typed that was NOT in currentLetters
-        const incorrectLettersTyped = userGuess.filter(ul => !currentLetters.includes(ul));
-        // Check if all letters from currentLetters were present in the user's guess
-        const allTargetLettersGuessedCorrectly = currentLetters.every(cl => userGuess.includes(cl)) &&
-            userGuess.length === currentLetters.length &&
-            new Set(userGuess).size === currentLetters.length;
+        // --- Update Accuracy Display Stats ---
+        totalLettersAttempted += userGuess.length;
+        // Grant 1 point for accuracy for correct position, 0.5 for correct letter in wrong position
+        totalLettersCorrect += numCorrectInPosition + (numCorrectWrongPosition * 0.5);
 
-        // Scoring penalty for re-flashes: 20% off per re-flash (configurable)
-        const reflashPenaltyPer = 0.2;
-        const reflashMultiplier = Math.max(0, 1 - reflashCount * reflashPenaltyPer);
+        // --- Speed Adjustment Logic ---
+        const isPerfectRound = (numCorrectInPosition === currentLetters.length) && (userGuess.length === currentLetters.length);
+
+        // Condition for penalty: majority of *guessed* letters are completely wrong AND no letter was in correct position.
+        const applyPenalty = (completelyIncorrectTyped > userGuess.length / 2) && (numCorrectInPosition === 0);
+
+        if (applyPenalty) {
+            actualDisplaySpeed = Math.min(maxDisplaySpeed, actualDisplaySpeed + mistakeSpeedPenalty);
+            messageDisplay.className = "incorrect";
+        } else {
+            if (isPerfectRound) {
+                const decrease = calculateSpeedDecrease(true, actualDisplaySpeed, minPracticalDisplaySpeed);
+                actualDisplaySpeed = Math.max(minPracticalDisplaySpeed, actualDisplaySpeed - decrease);
+                messageDisplay.className = "bonus"; // Perfect round gets bonus style
+            } else if (numCorrectInPosition > 0 || numCorrectWrongPosition > 0) {
+                // Some letters correct (either position or just the letter type), and no penalty
+                const decrease = calculateSpeedDecrease(false, actualDisplaySpeed, minPracticalDisplaySpeed);
+                actualDisplaySpeed = Math.max(minPracticalDisplaySpeed, actualDisplaySpeed - decrease);
+                messageDisplay.className = "correct";
+            } else {
+                messageDisplay.className = "incorrect"; // Still an incorrect round in terms of score
+            }
+        }
+
+        // Always show the new time
+        const speedChangeMessage = `New time: ${actualDisplaySpeed} ms.`;
+
+        // --- Final Scoring --- 
+        let finalRoundScore = currentRoundBaseScore;
+        if (isPerfectRound) {
+            finalRoundScore += POINTS_PERFECT_ORDER_BONUS; // Add flat bonus for perfect, before speed/reflash multipliers
+        }
+
+        const speedMultiplier = Math.max(0.2, initialDisplaySpeed / actualDisplaySpeed);
+        finalRoundScore *= speedMultiplier;
+
+        const reflashMultiplier = Math.max(0, 1 - reflashCount * 0.20); // 0.20 is reflashPenaltyPer
+        finalRoundScore = Math.round(finalRoundScore * reflashMultiplier);
+
         if (reflashCount > 0) {
             reflashPenaltyMessage = ` (Re-flashed ${reflashCount} time${reflashCount > 1 ? 's' : ''}, score reduced)`;
         }
 
-        if (incorrectLettersTyped.length > 0 || !allTargetLettersGuessedCorrectly) {
-            // MISTAKE: Either an invalid letter was typed, or not all correct letters were identified
-            roundScore = 0;
-            actualDisplaySpeed = Math.min(maxDisplaySpeed, actualDisplaySpeed + mistakeSpeedPenalty);
-            speedChangeMessage = "Time per letter increased slightly.";
-            if (incorrectLettersTyped.length > 0) {
-                feedbackMessage = `Oops! '${incorrectLettersTyped.join(', ')}' wasn't shown. No points.`;
-            } else {
-                feedbackMessage = `Not quite all letters identified. No points.`;
-            }
-            feedbackMessage += ` Letters were: ${currentLetters.join(', ')}.`;
-            messageDisplay.className = "incorrect";
+        // --- Construct Feedback Message ---
+        // Emoji arrays for each tier
+        let startEmojis = [];
+        let endEmojis = [];
+        let supportiveMessages = [];
+        if (finalRoundScore >= 15) {
+            startEmojis = ['🎉', '🏆', '🥇', '🤩', '🙊'];
+            endEmojis = ['🙊', '🎊', '👏', '💯', '🎉'];
+            supportiveMessages = [
+                "Amazing!",
+                "Incredible memory!",
+                "You're on fire!",
+                "Superb!",
+                "Banana genius!"
+            ];
+        } else if (finalRoundScore >= 8) {
+            startEmojis = ['🍌', '🙈', '🦍', '🌟', '🍍'];
+            endEmojis = ['🙈', '🍌', '👍', '💪', '🍃'];
+            supportiveMessages = [
+                "Great job!",
+                "Nice work!",
+                "Keep it up!",
+                "Solid round!",
+                "You're getting sharper!"
+            ];
+        } else if (finalRoundScore > 0) {
+            startEmojis = ['🐒', '🙉', '🦧', '🍃', '😺'];
+            endEmojis = ['🙉', '🐒', '🙂', '🌱', '🍂'];
+            supportiveMessages = [
+                "Not bad!",
+                "Keep practicing!",
+                "You can do it!",
+                "Stay focused!",
+                "Almost there!"
+            ];
         } else {
-            // All letters identified are correct and all target letters were identified. Now check order.
-            const isOrderPerfect = userGuess.every((letter, index) => letter === currentLetters[index]);
-            const speedMultiplier = Math.max(0.2, initialDisplaySpeed / actualDisplaySpeed); // Min multiplier 0.2
-
-            let baseRoundPoints = basePointsPerLetter * currentLetters.length * speedMultiplier;
-            roundScore = baseRoundPoints;
-
-            if (isOrderPerfect) {
-                roundScore += orderBonusBasePoints * speedMultiplier;
-                feedbackMessage = `Perfect! All correct and in order!`;
-                const decrease = calculateSpeedDecrease(true, actualDisplaySpeed, minPracticalDisplaySpeed);
-                actualDisplaySpeed = Math.max(minPracticalDisplaySpeed, actualDisplaySpeed - decrease);
-                speedChangeMessage = "Time per letter decreased significantly!";
-                messageDisplay.className = "bonus";
-            } else {
-                feedbackMessage = `All letters correct, but wrong order.`;
-                const decrease = calculateSpeedDecrease(false, actualDisplaySpeed, minPracticalDisplaySpeed);
-                actualDisplaySpeed = Math.max(minPracticalDisplaySpeed, actualDisplaySpeed - decrease);
-                speedChangeMessage = "Time per letter decreased.";
-                messageDisplay.className = "correct";
+            startEmojis = ['🌱', '😅', '🥲', '🫣', '🫤'];
+            endEmojis = ['🌱', '😬', '😶‍🌫️', '🫠', '💤'];
+            supportiveMessages = [
+                "Don't give up!",
+                "Try again!",
+                "Every round helps!",
+                "Keep going!",
+                "You'll get it next time!"
+            ];
+        }
+        // Pick random emojis for start and end (can be the same, but usually not)
+        const startEmoji = startEmojis[Math.floor(Math.random() * startEmojis.length)];
+        let endEmoji = endEmojis[Math.floor(Math.random() * endEmojis.length)];
+        // If by chance they're the same, pick again for end (unless only one in array)
+        if (startEmojis.length > 1 && startEmoji === endEmoji) {
+            let tries = 0;
+            while (endEmoji === startEmoji && tries < 5) {
+                endEmoji = endEmojis[Math.floor(Math.random() * endEmojis.length)];
+                tries++;
             }
-            // Apply re-flash penalty
-            roundScore = Math.round(roundScore * reflashMultiplier);
-            feedbackMessage += ` +${roundScore} points${reflashPenaltyMessage}. Letters: ${currentLetters.join(', ')}.`;
+        }
+        const randomMsg = supportiveMessages[Math.floor(Math.random() * supportiveMessages.length)];
+        // Compose guess and answer string
+        const guessStr = userGuess.join('');
+        const answerStr = currentLetters.join('');
+        // Build the new feedback message
+        feedbackMessage = `${startEmoji} ${randomMsg}  Guess: ${guessStr}, Answer: ${answerStr}. `;
+        if (finalRoundScore > 0) {
+            feedbackMessage += `+${finalRoundScore} points. `;
+        } else {
+            feedbackMessage += `No points this round. `;
+        }
+        if (reflashCount > 0) {
+            feedbackMessage += `(Re-flashed ${reflashCount} time${reflashCount > 1 ? 's' : ''}, score reduced). `;
+        }
+        feedbackMessage += speedChangeMessage + ` ${endEmoji}`;
+
+        messageDisplay.textContent = feedbackMessage;
+        score += finalRoundScore;
+        updateDisplays();
+
+        if (currentRound >= MAX_ROUNDS && gameActive) {
+            endGame();
+        } else if (gameActive) {
+            setSubmitButtonMode('next');
+            if (nextRoundHint) {
+                nextRoundHint.textContent = "Press Enter to start next round.";
+                nextRoundHint.classList.add('visible-hint');
+            }
+            requestAnimationFrame(() => { submitButton.focus(); });
         }
 
-        messageDisplay.textContent = feedbackMessage + " " + speedChangeMessage;
-        score += roundScore; // Add roundScore (0 if mistake)
-        lastRoundEndTime = performance.now();
-        updateDisplays(); // Update score, round, and new speed display
+        // Show player name input
+        playerNameInput.value = ''; // Clear previous name
+        playerNameSubmissionArea.classList.remove('hidden');
+        const localSubmitScoreButton = document.getElementById('submit-score-button'); // Ensure we get the latest button
+        localSubmitScoreButton.disabled = false;
+        localSubmitScoreButton.textContent = 'Submit to Leaderboard';
 
-        if (gameActive) {
-            nextRoundButton.classList.remove('hidden');
-            nextRoundButton.disabled = false;
-            showNextRoundHint(true);
+        // Focus on name input
+        playerNameInput.focus();
+
+        const handleSubmitScoreClick = () => {
+            const playerName = playerNameInput.value.trim();
+            if (playerName.length >= 3 && playerName.length <= 10) {
+                localSubmitScoreButton.disabled = true;
+                localSubmitScoreButton.textContent = 'Submitting...';
+                submitScoreToLeaderboard(playerName, score, numberOfLettersToDisplay, overallGameAccuracy);
+            } else {
+                let originalMessage = messageDisplay.textContent;
+                messageDisplay.textContent = "Name must be 3-10 characters. " + originalMessage.split(" Name must be")[0]; // Avoid appending multiple times
+                playerNameInput.focus();
+            }
+        };
+
+        // Remove previous listener if any to prevent multiple submissions
+        const newSubmitScoreButton = localSubmitScoreButton.cloneNode(true);
+        localSubmitScoreButton.parentNode.replaceChild(newSubmitScoreButton, localSubmitScoreButton);
+        document.getElementById('submit-score-button').addEventListener('click', handleSubmitScoreClick);
+    }
+
+    function endGame() {
+        gameActive = false;
+        stopFlashCycle();
+
+        // Calculate overall game accuracy
+        if (totalLettersAttempted > 0) {
+            overallGameAccuracy = (totalLettersCorrect / totalLettersAttempted) * 100;
+        } else {
+            overallGameAccuracy = 0; // Or 100 if no attempts means perfect by default?
         }
-        lettersDisplayed = false; // No longer used, but kept for compatibility
+
+        // --- Refined: Use normalized score (score per letter) for fairer end-game messaging ---
+        const scoreBrackets = [
+            {
+                min: 0, max: 99,
+                emoji: ['🌱', '😅', '🥲', '🫣', '🫤', '🙈', '🍌', '💤', '😬', '😶‍🌫️'],
+                messages: [
+                    "Banana Beginner! Back to the trees for more practice!",
+                    "Oops! Did you slip on a banana peel?",
+                    "Don't worry, even monkeys fall sometimes!",
+                    "You'll get it next time, seedling!",
+                    "The jungle giggles, but you'll be back!",
+                    "Keep trying, little monkey!",
+                    "Banana memory loading…",
+                    "You're just getting started!",
+                    "Every monkey starts somewhere!",
+                    "At least you didn't eat your keyboard!"
+                ]
+            },
+            {
+                min: 100, max: 199,
+                emoji: ['🐒', '🍃', '🌱', '🙉', '🍂', '😺', '🌴', '🥉', '🦧', '🧭'],
+                messages: [
+                    "Jungle Explorer! You made it through the vines!",
+                    "Not bad! Keep climbing, explorer!",
+                    "You're learning the ways of the jungle!",
+                    "Banana potential detected!",
+                    "You're on the right branch!",
+                    "Keep swinging, you'll get there!",
+                    "Monkey see, monkey do – and you did!",
+                    "You're almost a Monkey Master!",
+                    "The jungle is rooting for you!",
+                    "Practice makes perfect (and bananas)!"
+                ]
+            },
+            {
+                min: 200, max: 299,
+                emoji: ['🐵', '🍌', '🌿', '🙊', '🍍', '🦧', '🍂', '🌴', '🧗', '🦜'],
+                messages: [
+                    "Banana Bud! You're getting the hang of this!",
+                    "Monkey moves detected!",
+                    "You're swinging higher!",
+                    "Banana stash growing!",
+                    "You're a jungle up-and-comer!",
+                    "Keep munching those memory bananas!",
+                    "You're on the right vine!",
+                    "Monkey business is booming!",
+                    "You're climbing the jungle ranks!",
+                    "Banana brain in progress!"
+                ]
+            },
+            {
+                min: 300, max: 399,
+                emoji: ['🙈', '🍌', '🦍', '🌟', '🍍', '👏', '😎', '🦧', '🍃', '🥈'],
+                messages: [
+                    "Monkey Apprentice! The jungle is impressed!",
+                    "Great job! You're swinging through those letters!",
+                    "Banana-fuelled brilliance!",
+                    "You're a memory machine!",
+                    "That's some serious monkey business!",
+                    "You've got more focus than a monkey with a magnifying glass!",
+                    "You're climbing the leaderboard vine!",
+                    "You're one smart primate!",
+                    "Keep going, Monkey Apprentice!",
+                    "Banana stash: growing rapidly!"
+                ]
+            },
+            {
+                min: 400, max: 499,
+                emoji: ['🦍', '🍌', '🎊', '💪', '🌟', '🍍', '👏', '😎', '🥈', '🙈'],
+                messages: [
+                    "Monkey Master! The jungle is impressed!",
+                    "Banana stash overflowing!",
+                    "You're a memory machine!",
+                    "That's some serious monkey business!",
+                    "You've got more focus than a monkey with a magnifying glass!",
+                    "You're climbing the leaderboard vine!",
+                    "Banana-fuelled brilliance!",
+                    "You're one smart primate!",
+                    "Keep going, Monkey Master!",
+                    "Banana brain: upgraded!"
+                ]
+            },
+            {
+                min: 500, max: 599,
+                emoji: ['🦍', '🍌', '🏅', '🎉', '🙊', '💪', '🌟', '🍍', '👏', '😎'],
+                messages: [
+                    "Banana Boss! You're dominating the jungle!",
+                    "Memory muscles flexed!",
+                    "You're a banana-slinging superstar!",
+                    "Jungle legend in the making!",
+                    "You're swinging with style!",
+                    "Banana brain: supercharged!",
+                    "You're a focus phenom!",
+                    "Monkey business is your business!",
+                    "You're a vine-swinging virtuoso!",
+                    "Banana Boss badge unlocked!"
+                ]
+            },
+            {
+                min: 600, max: 699,
+                emoji: ['🦍', '🍌', '🏅', '🎉', '🙊', '💪', '🌟', '🍍', '👏', '😎'],
+                messages: [
+                    "Banana Baron! The jungle is in awe!",
+                    "You're a memory marvel!",
+                    "Banana brilliance!",
+                    "You're a focus force of nature!",
+                    "Monkey mind: maxed out!",
+                    "You're a legend in the making!",
+                    "Banana Baron badge unlocked!",
+                    "You're a vine-swinging virtuoso!",
+                    "Banana Baron: bananas for days!",
+                    "You're a focus phenom!"
+                ]
+            },
+            {
+                min: 700, max: 799,
+                emoji: ['🙊', '🍌', '🏆', '🎉', '👑', '🚀', '🤩', '💯', '🔥', '🥇'],
+                messages: [
+                    "Banana King! You're ruling the jungle!",
+                    "Unstoppable! The jungle bows to your memory powers!",
+                    "Legendary! Did you eat a whole bunch of bananas before playing?",
+                    "You see letters faster than a monkey spots a banana truck!",
+                    "Top of the tree! Is that a crown or just a banana peel?",
+                    "You broke the banana speed limit!",
+                    "Monkeyread Mastermind!",
+                    "Your neurons are doing backflips!",
+                    "Banana trophy unlocked!",
+                    "You just set a new jungle record!"
+                ]
+            },
+            {
+                min: 800, max: 899,
+                emoji: ['👑', '🍌', '🏆', '🎉', '🙊', '🚀', '🤩', '💯', '🔥', '🥇'],
+                messages: [
+                    "Banana Emperor! You're a legend!",
+                    "Unbelievable! The jungle is speechless!",
+                    "You're a memory monarch!",
+                    "Banana Emperor badge unlocked!",
+                    "You're rewriting the jungle record books!",
+                    "Banana Emperor: bananas for eternity!",
+                    "You're a focus force of nature!",
+                    "Monkey mind: maxed out!",
+                    "Banana Emperor: the legend continues!",
+                    "You're a vine-swinging virtuoso!"
+                ]
+            },
+            {
+                min: 900, max: 999,
+                emoji: ['👑', '🍌', '🏆', '🎉', '🙊', '🚀', '🤩', '💯', '🔥', '🥇'],
+                messages: [
+                    "Banana Supreme! You're rewriting the laws of monkey memory!",
+                    "Unreal! The jungle is in shock!",
+                    "You're a memory machine!",
+                    "Banana Supreme badge unlocked!",
+                    "You're a legend among monkeys!",
+                    "Banana Supreme: bananas for centuries!",
+                    "You're a focus force of nature!",
+                    "Monkey mind: maxed out!",
+                    "Banana Supreme: the saga continues!",
+                    "You're a vine-swinging virtuoso!"
+                ]
+            },
+            {
+                min: 1000, max: 1099,
+                emoji: ['👑', '🍌', '🏆', '🎉', '🙊', '🚀', '🤩', '💯', '🔥', '🥇'],
+                messages: [
+                    "Banana Immortal! You've ascended to monkey legend!",
+                    "Transcendent! The jungle is in awe!",
+                    "You're a memory immortal!",
+                    "Banana Immortal badge unlocked!",
+                    "You're rewriting the jungle's history books!",
+                    "Banana Immortal: bananas for millennia!",
+                    "You're a focus force of nature!",
+                    "Monkey mind: maxed out!",
+                    "Banana Immortal: the legend grows!",
+                    "You're a vine-swinging virtuoso!"
+                ]
+            },
+            {
+                min: 1100, max: 1199,
+                emoji: ['👑', '🍌', '🏆', '🎉', '🙊', '🚀', '🤩', '💯', '🔥', '🥇'],
+                messages: [
+                    "Banana Ascendant! You're a myth in the jungle!",
+                    "Unbelievable! The jungle is speechless!",
+                    "You're a memory ascendant!",
+                    "Banana Ascendant badge unlocked!",
+                    "You're rewriting the jungle's legends!",
+                    "Banana Ascendant: bananas for eons!",
+                    "You're a focus force of nature!",
+                    "Monkey mind: maxed out!",
+                    "Banana Ascendant: the myth continues!",
+                    "You're a vine-swinging virtuoso!"
+                ]
+            },
+            {
+                min: 1200, max: 1299,
+                emoji: ['👑', '🍌', '🏆', '🎉', '🙊', '🚀', '🤩', '💯', '🔥', '🥇'],
+                messages: [
+                    "Banana Deity! You're a god among monkeys!",
+                    "Transcendent! The jungle is in awe!",
+                    "You're a memory deity!",
+                    "Banana Deity badge unlocked!",
+                    "You're rewriting the jungle's divine records!",
+                    "Banana Deity: bananas for infinity!",
+                    "You're a focus force of nature!",
+                    "Monkey mind: maxed out!",
+                    "Banana Deity: the saga continues!",
+                    "You're a vine-swinging virtuoso!"
+                ]
+            },
+            {
+                min: 1300, max: 1399,
+                emoji: ['👑', '🍌', '🏆', '🎉', '🙊', '🚀', '🤩', '💯', '🔥', '🥇'],
+                messages: [
+                    "Banana Cosmic! You're out of this world!",
+                    "Unreal! The universe is in shock!",
+                    "You're a cosmic memory!",
+                    "Banana Cosmic badge unlocked!",
+                    "You're rewriting the universe's records!",
+                    "Banana Cosmic: bananas for galaxies!",
+                    "You're a focus force of nature!",
+                    "Monkey mind: maxed out!",
+                    "Banana Cosmic: the legend expands!",
+                    "You're a vine-swinging virtuoso!"
+                ]
+            },
+            {
+                min: 1400, max: 1499,
+                emoji: ['👑', '🍌', '🏆', '🎉', '🙊', '🚀', '🤩', '💯', '🔥', '🥇'],
+                messages: [
+                    "Banana Multiversal! You're a legend in every dimension!",
+                    "Transcendent! The multiverse is in awe!",
+                    "You're a multiversal memory!",
+                    "Banana Multiversal badge unlocked!",
+                    "You're rewriting the multiverse's records!",
+                    "Banana Multiversal: bananas for all realities!",
+                    "You're a focus force of nature!",
+                    "Monkey mind: maxed out!",
+                    "Banana Multiversal: the saga continues!",
+                    "You're a vine-swinging virtuoso!"
+                ]
+            },
+            {
+                min: 1500, max: Infinity,
+                emoji: ['👑', '🍌', '🏆', '🎉', '🙊', '🚀', '🤩', '💯', '🔥', '🥇'],
+                messages: [
+                    "Banana Infinite! You've broken the game!",
+                    "Unstoppable! The cosmos bows to your memory powers!",
+                    "You're a memory singularity!",
+                    "Banana Infinite badge unlocked!",
+                    "You're rewriting the laws of reality!",
+                    "Banana Infinite: bananas for eternity!",
+                    "You're a focus force of nature!",
+                    "Monkey mind: maxed out!",
+                    "Banana Infinite: the legend is eternal!",
+                    "You're a vine-swinging virtuoso!"
+                ]
+            }
+        ];
+        // Calculate normalized score (score per letter)
+        const normalizedScore = numberOfLettersToDisplay > 0 ? score / numberOfLettersToDisplay : score;
+        // Find the correct bracket using normalized score
+        const bracket = scoreBrackets.find(b => normalizedScore >= b.min && normalizedScore <= b.max) || scoreBrackets[0];
+        const chosenEmoji = bracket.emoji[Math.floor(Math.random() * bracket.emoji.length)];
+        const chosenMsg = bracket.messages[Math.floor(Math.random() * bracket.messages.length)];
+        // Show both raw score and difficulty in the message
+        const gameOverMsg = `${chosenEmoji} ${chosenMsg} Final Score: ${score} (Difficulty: ${numberOfLettersToDisplay} letters) in ${MAX_ROUNDS} rounds.`;
+        messageDisplay.textContent = gameOverMsg;
+        messageDisplay.className = "bonus";
+        submitButton.disabled = true;
+        submitButton.textContent = 'Submit Answer';
+        submitButton.onclick = handleAnswerSubmitted;
+        reflashButton.disabled = true;
+        startButton.textContent = "Play Again?";
+        difficultySlider.disabled = false;
+        if (nextRoundHint) nextRoundHint.classList.remove('visible-hint');
+        updateDisplays();
     }
 
     function updateDifficulty() {
@@ -460,21 +1085,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Event Listeners ---
     startButton.addEventListener('click', () => {
         stopFlashCycle();
-        gameActive = false;
+        gameActive = false; // Explicitly set gameActive to false before starting/restarting
         startGame();
     });
-
-    nextRoundButton.addEventListener('click', () => {
-        if (gameActive) {
-            nextRoundButton.classList.add('hidden');
-            nextRoundButton.disabled = true;
-            showNextRoundHint(false);
-            countdownMessageDisplay.textContent = "";
-            advanceToNextRound();
-        }
-    });
-
-    submitButton.addEventListener('click', handleAnswerSubmitted);
 
     reflashButton.addEventListener('click', handleReflashRequest);
 
@@ -502,6 +1115,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (event.key === 'Enter' && currentIndex !== -1 && currentIndex === letterInputs.length - 1 && !submitButton.disabled) {
+                event.preventDefault();
                 handleAnswerSubmitted();
             }
         }
@@ -510,17 +1124,8 @@ document.addEventListener('DOMContentLoaded', () => {
     difficultySlider.addEventListener('input', () => {
         if (!gameActive) {
             updateDifficulty();
-        }
-    });
-
-    // Listen for Enter key to trigger next round if button is visible/enabled
-    window.addEventListener('keydown', (e) => {
-        if (
-            e.key === 'Enter' &&
-            !nextRoundButton.classList.contains('hidden') &&
-            !nextRoundButton.disabled
-        ) {
-            nextRoundButton.click();
+            // Update total time display if difficulty changes when game not active
+            updateTotalTimeDisplay();
         }
     });
 
@@ -528,11 +1133,13 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDifficulty();
     updateDisplays();
     resetUIForNewRound();
+    difficultySlider.disabled = false;
 
-    function showNextRoundHint(show) {
-        if (nextRoundHint) {
-            nextRoundHint.textContent = show ? 'Tip: Press Enter to start the next round.' : '';
-            nextRoundHint.style.display = show ? 'block' : 'none';
-        }
-    }
+    // Estimate frame interval to adjust minPracticalDisplaySpeed
+    estimateFrameInterval(() => {
+        console.log(`Async: Min practical display speed has been finalized to ${minPracticalDisplaySpeed}ms.`);
+        updateDisplays();
+        createLeaderboardDifficultySelector(); // Create selector buttons
+        fetchAndDisplayLeaderboard(); // Fetch leaderboard for default difficulty
+    });
 });
