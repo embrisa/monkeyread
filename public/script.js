@@ -36,8 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let countdownIntervalId = null;
 
     // --- Dynamic Speed and Scoring Logic ---
-    let actualDisplaySpeed = 500; // This will be dynamically adjusted
-    const initialDisplaySpeed = 500; // Base speed to start and for score calculation reference
+    let actualDisplaySpeed = 300; // This will be dynamically adjusted
+    const initialDisplaySpeed = 300; // Base speed to start and for score calculation reference
     const minPracticalDisplaySpeed = 20; // Practical floor for setTimeout and perception
     const maxDisplaySpeed = 700; // A cap if speed gets too slow
 
@@ -180,6 +180,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function calculateSpeedDecrease(isPerfect, speed, minSpeed) {
+        if (speed > 100) {
+            // Use original values above 100ms
+            return isPerfect ? (defaultSpeedChangeOnCorrect + perfectRoundSpeedBoost) : defaultSpeedChangeOnCorrect;
+        } else if (speed > 50) {
+            // 100ms >= speed > 50ms
+            if (isPerfect) {
+                // 20ms at 100ms, 10ms at 50ms
+                return 10 + 10 * (speed - 50) / 50;
+            } else {
+                // 10ms at 100ms, 5ms at 50ms
+                return 5 + 5 * (speed - 50) / 50;
+            }
+        } else {
+            // 50ms >= speed >= minPracticalDisplaySpeed
+            if (isPerfect) {
+                // 12ms at 50ms, 5ms at min
+                return 5 + 7 * (speed - minSpeed) / (50 - minSpeed);
+            } else {
+                // 7ms at 50ms, 1ms at min
+                return 1 + 6 * (speed - minSpeed) / (50 - minSpeed);
+            }
+        }
+    }
+
     function handleAnswerSubmitted() {
         if (selectedGameMode === "classic" && !lettersDisplayed) return;
 
@@ -236,12 +261,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isOrderPerfect) {
                 roundScore += orderBonusBasePoints * speedMultiplier;
                 feedbackMessage = `Perfect! All correct and in order!`;
-                actualDisplaySpeed = Math.max(minPracticalDisplaySpeed, actualDisplaySpeed - defaultSpeedChangeOnCorrect - perfectRoundSpeedBoost);
+                const decrease = calculateSpeedDecrease(true, actualDisplaySpeed, minPracticalDisplaySpeed);
+                actualDisplaySpeed = Math.max(minPracticalDisplaySpeed, actualDisplaySpeed - decrease);
                 speedChangeMessage = "Speed increased significantly!";
                 messageDisplay.className = "bonus";
             } else {
                 feedbackMessage = `All glyphs correct, but wrong order.`;
-                actualDisplaySpeed = Math.max(minPracticalDisplaySpeed, actualDisplaySpeed - defaultSpeedChangeOnCorrect);
+                const decrease = calculateSpeedDecrease(false, actualDisplaySpeed, minPracticalDisplaySpeed);
+                actualDisplaySpeed = Math.max(minPracticalDisplaySpeed, actualDisplaySpeed - decrease);
                 speedChangeMessage = "Speed increased.";
                 messageDisplay.className = "correct";
             }
