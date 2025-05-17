@@ -1,7 +1,5 @@
 **Project Context: Monkeyread - Dynamic Focus Challenge**
 
-**Before addressing the specific request below, please always consider the following established context for the Monkeyread project:**
-
 **1. Core Project Goal:**
 Monkeyread is a fast-paced, focus-driven memory game designed to challenge and improve user's short-term memory and focus by recalling sequences of flashing letters (glyphs). The game's difficulty (display speed) dynamically adjusts based on player performance. The overall aim is an engaging and accessible brain-training experience.
 
@@ -32,10 +30,32 @@ Monkeyread is a fast-paced, focus-driven memory game designed to challenge and i
     - All game timing (letter flashing, pauses, re-flash cycles, etc.) **must use `requestAnimationFrame`** for accuracy and smoothness. Do **not** use `setTimeout` or `setInterval` for these purposes, as they are subject to browser throttling and can be inaccurate at high speeds.
     - This approach ensures that all visual updates are synchronized with the browser's rendering loop and the user's screen refresh rate, which is critical for perceptual accuracy in a fast-paced memory game like Monkeyread.
 
-**6. Game Logic & Game Loop:**
-    - Monkeyread operates in a single, difficulty-adjustable game mode. At the start of each round, a sequence of N unique letters (N = difficulty, 1–6) is generated and flashed sequentially to the player.
-    - After the sequence is shown, the input area is revealed and a 3-second pause begins. If the player submits their answer during this pause, the round is scored immediately.
-    - If no answer is submitted within the 3-second window, the *same* sequence is re-flashed, and the cycle (flash → pause → input) repeats until the player submits an answer.
-    - Each re-flash reduces the potential score for that round (e.g., by 20% per re-flash). The scoring system also considers speed and correctness (all correct/in order vs. correct but unordered).
-    - All timing and animation for flashing and pauses is managed using `requestAnimationFrame` for accuracy and to match the browser's rendering loop.
-    - State variables (such as current letters, round, score, reflash count, and display speed) are reset or updated appropriately at the start of each new round or game.
+**6. Game Logic & Game Loop (Current Implementation):**
+- Monkeyread operates in a single, difficulty-adjustable game mode. At the start of each round, a sequence of N unique letters (N = difficulty, 1–6) is generated and flashed sequentially to the player.
+- **Before each round starts, a 1-second countdown is displayed in the letter display area as milliseconds (e.g., '532'), with no label or prefix.**
+- After the countdown, the sequence is shown. The input area and two buttons become available:
+    - **Submit Answer**: Enter your guess for the sequence.
+    - **Re-flash Letters**: Replay the current sequence (each use reduces the round's score by 20%).
+- The player can submit their answer at any time. After submission, feedback and scoring are shown, and only the **Next Round** button is enabled.
+- **Progression is strictly manual:** The player must click the Next Round button or press Enter to start the next round. A small hint below the button informs the user of the Enter shortcut.
+- All timing and animation for flashing and pauses is managed using `requestAnimationFrame` for accuracy and to match the browser's rendering loop.
+- State variables (such as current letters, round, score, reflash count, and display speed) are reset or updated appropriately at the start of each new round or game.
+
+**7. Scoring System:**
+- Points are awarded based on the current display speed (faster speed = more points).
+- **Perfect (All glyphs correct & in order):** Max points for the round! Display speed for the next round significantly decreases (gets faster).
+- **Correct glyphs, wrong order:** Good points! Display speed moderately decreases.
+- **Any incorrect glyph / Not all glyphs identified:** No points for the round. Display speed slightly increases (gets slower).
+- **Each re-flash reduces your score for the round by 20%.**
+
+**8. User Experience Flow:**
+1. Click "Start Game". A 1-second millisecond countdown appears in the letter display area.
+2. Letters flash in sequence.
+3. Input area and buttons appear. User can submit an answer or re-flash the sequence (with penalty).
+4. After submitting, feedback and score are shown. Only the Next Round button is enabled, with a hint for Enter.
+5. User clicks Next Round or presses Enter to continue. The cycle repeats.
+
+**9. Accessibility & UI:**
+- All interactive elements are accessible by keyboard.
+- The countdown, letter flashes, and feedback are visually clear and high-contrast.
+- The Enter-to-continue hint is always present in the HTML and styled via CSS.

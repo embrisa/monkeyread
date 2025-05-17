@@ -29,15 +29,8 @@
             </fieldset>
             <fieldset id="difficulty-selection">
                 <legend>Difficulty (Number of Letters)</legend>
-                <label for="difficulty-selector">Letters:</label>
-                <select id="difficulty-selector">
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3" selected>3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                </select>
+                <label for="difficulty-slider">Letters: <span id="difficulty-value">3</span></label>
+                <input type="range" id="difficulty-slider" min="1" max="6" value="3" step="1">
             </fieldset>
         </div>
 

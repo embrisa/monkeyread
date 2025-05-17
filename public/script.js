@@ -12,8 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentScoreDisplay = document.getElementById('current-score');
     const currentSpeedDisplay = document.getElementById('current-speed');
     const countdownMessageDisplay = document.getElementById('countdown-message');
-    const gameModeRadios = document.querySelectorAll('input[name="gameMode"]');
-    const difficultySelector = document.getElementById('difficulty-selector');
+    const difficultySlider = document.getElementById('difficulty-slider');
+    const difficultyValue = document.getElementById('difficulty-value');
     const reflashButton = document.getElementById('reflash-button');
 
     // Game State Variables
@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let score = 0;
     let gameActive = false;
     let lettersDisplayed = false;
-    let selectedGameMode = "auto";
     let numberOfLettersToDisplay = 3;
     let reflashCount = 0;
     let reflashTimeoutId = null;
@@ -72,16 +71,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentLetters.push(letter);
             }
         }
-    }
-
-    function updateSelectedOptions() {
-        for (const radio of gameModeRadios) {
-            if (radio.checked) selectedGameMode = radio.value;
-        }
-    }
-
-    function toggleOptionsInputs(enable) {
-        gameModeRadios.forEach(radio => radio.disabled = !enable);
     }
 
     function createLetterInputs(num) {
@@ -235,16 +224,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startGame() {
         gameActive = true;
-        updateSelectedOptions();
         resetUIForNewRound(); // Use the round reset
-        toggleOptionsInputs(false);
-
         currentRound = 1;
         score = 0;
         actualDisplaySpeed = initialDisplaySpeed; // Reset speed to initial
         updateDisplays();
         startButton.textContent = "Restart Game";
-
         proceedToNextRoundSetup();
     }
 
@@ -397,7 +382,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateDifficulty() {
-        numberOfLettersToDisplay = parseInt(difficultySelector.value, 10);
+        numberOfLettersToDisplay = parseInt(difficultySlider.value, 10);
+        difficultyValue.textContent = numberOfLettersToDisplay;
         createLetterInputs(numberOfLettersToDisplay);
     }
 
@@ -405,7 +391,6 @@ document.addEventListener('DOMContentLoaded', () => {
     startButton.addEventListener('click', () => {
         stopFlashCycle();
         gameActive = false;
-        toggleOptionsInputs(true);
         startGame();
     });
 
@@ -452,17 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    [...gameModeRadios].forEach(radio => {
-        radio.addEventListener('change', () => {
-            if (!gameActive) {
-                updateSelectedOptions();
-            } else {
-                if (radio.name === "gameMode") radio.checked = (radio.value === selectedGameMode);
-            }
-        });
-    });
-
-    difficultySelector.addEventListener('change', () => {
+    difficultySlider.addEventListener('input', () => {
         if (!gameActive) {
             updateDifficulty();
         }
@@ -482,7 +457,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial Setup
     updateDifficulty();
     updateDisplays();
-    toggleOptionsInputs(true);
     resetUIForNewRound();
 });
 
