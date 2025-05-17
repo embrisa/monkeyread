@@ -42,12 +42,12 @@ Monkeyread is a fast-paced, focus-driven memory game designed to challenge and i
 - State variables (such as current letters, round, score, reflash count, and display speed) are reset or updated appropriately at the start of each new round or game.
 
 **7. Scoring System:**
-- Points are awarded based on the current display speed (faster speed = more points).
-- **Perfect (All glyphs correct & in order):** Max points for the round! Display speed for the next round significantly decreases (gets faster).
-- **Correct glyphs, wrong order:** Good points! Display speed moderately decreases.
-- **Any incorrect glyph / Not all glyphs identified:** No points for the round. Display speed slightly increases (gets slower).
+- Points are awarded based on the current display time (faster time = more points).
+- **Perfect (All glyphs correct & in order):** Max points for the round! Display time for the next round significantly decreases (gets faster).
+- **Correct glyphs, wrong order:** Good points! Display time moderately decreases.
+- **Any incorrect glyph / Not all glyphs identified:** No points for the round. Display time slightly increases (gets slower).
 - **Each re-flash reduces your score for the round by 20%.**
-- **Speed:** The "Speed" shown in the scoreboard is the number of milliseconds each letter is displayed during the flashing sequence (not the total time for the whole sequence). The total time to display the full sequence is (Speed × Number of Letters).
+- **Time:** The "Time" shown in the scoreboard is the number of milliseconds each letter is displayed during the flashing sequence (not the total time for the whole sequence). The total time to display the full sequence is (Time × Number of Letters).
 - **Accuracy Score:** The "Accuracy" shown in the scoreboard is the percentage of letters you have entered correctly (including partial credit for correct letters in the wrong position) out of all letters attempted during the session. This helps you track your overall precision, not just your score.
 
 **8. User Experience Flow:**
@@ -61,3 +61,32 @@ Monkeyread is a fast-paced, focus-driven memory game designed to challenge and i
 - All interactive elements are accessible by keyboard.
 - The countdown, letter flashes, and feedback are visually clear and high-contrast.
 - The Enter-to-continue hint is always present in the HTML and styled via CSS.
+
+**10. Key CSS Classes & IDs:**
+- **Layout & Structure:**
+    - `.container`: The main wrapper for all game content, providing a consistent centered layout and background.
+    - `#game-options`: Container for game settings like difficulty.
+    - `#controls-area`: Holds main action buttons like "Start Game", "Next Round".
+    - `#letter-display-area`: The prominent block where letters are flashed to the user.
+    - `#input-area`: Contains the letter input fields and the submit button.
+    - `#score-area`: Displays current round, score, accuracy, and speed.
+    - `#instructions`: Section for game rules and how-to-play information.
+    - `.how-fast-section`: Container for the informational text about visual perception speed.
+- **Buttons & Interactivity:**
+    - `.button`: Base class for all buttons, providing common styling.
+    - `.button-primary`, `.button-secondary`, `.button-submit`: Variants of the base button style for different actions.
+    - `*:focus-visible`: Provides a consistent focus outline for accessibility on all focusable elements.
+- **Game Elements & Feedback:**
+    - `#flashing-letter`: The `<span>` inside `#letter-display-area` that shows the individual letters during the sequence.
+    - `.letter-inputs-wrapper input[type="text"]`: Styles for the individual letter input boxes.
+    - `#message`: The paragraph element used to display feedback messages to the user (e.g., correct, incorrect).
+    - `#message.correct`, `#message.incorrect`, `#message.bonus`: Modifier classes applied to `#message` to style it based on the type of feedback.
+    - `#pause-countdown-display`: Displays the 1-second countdown before letters are flashed.
+- **State & Utility:**
+    - `.hidden`: A utility class to hide elements by setting `display: none !important;`.
+    - `#difficulty-slider`: The range input slider for selecting game difficulty.
+    - `#difficulty-value`: Displays the current numerical value of the difficulty slider.
+- **Theming (CSS Custom Properties in `:root`):**
+    - `--color-bg`, `--color-text`, `--color-primary-accent`, etc.: Define the core color palette (Banana/Jungle theme).
+    - `--font-heading`, `--font-body`: Define the primary typefaces used.
+    - `--border-radius-soft`, `--shadow-subtle`: Define common stylistic values for consistency.

@@ -16,6 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const difficultyValue = document.getElementById('difficulty-value');
     const reflashButton = document.getElementById('reflash-button');
     const accuracyRatingDisplay = document.getElementById('accuracy-rating');
+    const pauseCountdownDisplay = document.getElementById('pause-countdown-display');
+    // --- Total Time Tracking ---
+    let gameStartTime = null;
+    let lastRoundEndTime = null;
+    const totalTimeDisplay = document.getElementById('total-time');
 
     // Game State Variables
     let currentLetters = [];
@@ -188,6 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!flashCycleActive) return;
             inputArea.classList.remove('hidden');
             submitButton.disabled = false;
+            reflashButton.classList.remove('hidden');
             reflashButton.disabled = false;
             if (letterInputs.length > 0) letterInputs[0].focus();
         }
@@ -198,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         flashCycleActive = false;
         flashingLetterDisplay.textContent = '';
         flashingLetterDisplay.style.visibility = 'hidden';
+        if (pauseCountdownDisplay) pauseCountdownDisplay.textContent = "";
         reflashButton.classList.add('hidden');
         reflashButton.disabled = true;
     }
@@ -215,12 +222,23 @@ document.addEventListener('DOMContentLoaded', () => {
             let percent = (totalLettersCorrect / totalLettersAttempted) * 100;
             accuracyRatingDisplay.textContent = (percent % 1 === 0 ? Math.round(percent) : percent.toFixed(1)) + '%';
         }
+        updateTotalTimeDisplay();
+    }
+
+    function updateTotalTimeDisplay() {
+        if (gameStartTime && lastRoundEndTime) {
+            const elapsed = Math.round(lastRoundEndTime - gameStartTime);
+            totalTimeDisplay.textContent = elapsed;
+        } else {
+            totalTimeDisplay.textContent = "N/A";
+        }
     }
 
     function resetUIForNewRound() {
         messageDisplay.textContent = "";
         messageDisplay.className = "";
         countdownMessageDisplay.textContent = "";
+        if (pauseCountdownDisplay) pauseCountdownDisplay.textContent = "";
         inputArea.classList.add('hidden');
         nextRoundButton.classList.add('hidden');
         submitButton.disabled = true;
@@ -232,6 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
         stopFlashCycle();
         reflashCount = 0;
         showNextRoundHint(false);
+        updateTotalTimeDisplay();
     }
 
     function startGame() {
@@ -243,7 +262,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset accuracy stats
         totalLettersAttempted = 0;
         totalLettersCorrect = 0;
+        gameStartTime = performance.now();
+        lastRoundEndTime = null;
         updateDisplays();
+        updateTotalTimeDisplay();
         startButton.textContent = "Restart Game";
         proceedToNextRoundSetup();
     }
@@ -259,20 +281,27 @@ document.addEventListener('DOMContentLoaded', () => {
         resetUIForNewRound();
         generateLetters();
         currentSpeedDisplay.textContent = actualDisplaySpeed; // Ensure speed is updated for this round
-        // Add invisible 1 second pause before flashing letters
+        // Add visible 1 second pause before flashing letters
         let countdownDuration = 1000; // 1 second
         let startTimestamp = null;
         // Hide the flashing letter display during the pause
         flashingLetterDisplay.textContent = '';
         flashingLetterDisplay.style.visibility = 'hidden';
+        if (pauseCountdownDisplay) pauseCountdownDisplay.textContent = (countdownDuration / 1000).toFixed(3) + 's';
+
         function countdownStep(now) {
             if (!startTimestamp) startTimestamp = now;
             let elapsed = now - startTimestamp;
             let remaining = Math.max(0, countdownDuration - elapsed);
-            // No visual update during pause
+
+            if (pauseCountdownDisplay) {
+                pauseCountdownDisplay.textContent = (remaining / 1000).toFixed(3) + 's';
+            }
+
             if (remaining > 0) {
                 requestAnimationFrame(countdownStep);
             } else {
+                if (pauseCountdownDisplay) pauseCountdownDisplay.textContent = "";
                 flashingLetterDisplay.textContent = '';
                 flashingLetterDisplay.style.visibility = 'hidden';
                 manageFlashAndInputCycle();
@@ -374,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // MISTAKE: Either an invalid letter was typed, or not all correct letters were identified
             roundScore = 0;
             actualDisplaySpeed = Math.min(maxDisplaySpeed, actualDisplaySpeed + mistakeSpeedPenalty);
-            speedChangeMessage = "Speed decreased slightly.";
+            speedChangeMessage = "Time per letter increased slightly.";
             if (incorrectLettersTyped.length > 0) {
                 feedbackMessage = `Oops! '${incorrectLettersTyped.join(', ')}' wasn't shown. No points.`;
             } else {
@@ -395,13 +424,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 feedbackMessage = `Perfect! All correct and in order!`;
                 const decrease = calculateSpeedDecrease(true, actualDisplaySpeed, minPracticalDisplaySpeed);
                 actualDisplaySpeed = Math.max(minPracticalDisplaySpeed, actualDisplaySpeed - decrease);
-                speedChangeMessage = "Speed increased significantly!";
+                speedChangeMessage = "Time per letter decreased significantly!";
                 messageDisplay.className = "bonus";
             } else {
                 feedbackMessage = `All letters correct, but wrong order.`;
                 const decrease = calculateSpeedDecrease(false, actualDisplaySpeed, minPracticalDisplaySpeed);
                 actualDisplaySpeed = Math.max(minPracticalDisplaySpeed, actualDisplaySpeed - decrease);
-                speedChangeMessage = "Speed increased.";
+                speedChangeMessage = "Time per letter decreased.";
                 messageDisplay.className = "correct";
             }
             // Apply re-flash penalty
@@ -411,6 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         messageDisplay.textContent = feedbackMessage + " " + speedChangeMessage;
         score += roundScore; // Add roundScore (0 if mistake)
+        lastRoundEndTime = performance.now();
         updateDisplays(); // Update score, round, and new speed display
 
         if (gameActive) {

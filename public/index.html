@@ -46,6 +46,7 @@
         <div id="letter-display-area" aria-live="polite" aria-atomic="true">
             <span id="flashing-letter"></span>
         </div>
+        <p id="pause-countdown-display" aria-live="polite" aria-atomic="true"></p>
 
         <div id="countdown-area">
             <p id="countdown-message" aria-live="polite" aria-atomic="true"></p>
@@ -67,14 +68,8 @@
             <p>Round: <span id="current-level" aria-live="polite">1</span></p>
             <p>Score: <span id="current-score" aria-live="polite">0</span></p>
             <p>Accuracy: <span id="accuracy-rating" aria-live="polite">100%</span></p>
-            <p>Speed: <span id="current-speed" aria-live="polite">N/A</span> ms</p>
-        </div>
-        <div id="score-info-note">
-            <span
-                title="Speed is the time each letter is shown during the flashing sequence. The total sequence time is Speed × Number of Letters.">
-                <strong>Speed</strong> = time each letter is shown during the flashing sequence. <strong>Total sequence
-                    time</strong> = Speed × Number of Letters.
-            </span>
+            <p>Time per letter: <span id="current-speed" aria-live="polite">N/A</span> ms</p>
+            <p>Total time: <span id="total-time" aria-live="polite">N/A</span> ms</p>
         </div>
 
         <div id="instructions">
@@ -87,15 +82,15 @@
                     high-contrast for easy reading.</li>
                 <li><strong>Re-flash:</strong> If you need to see the sequence again, click the <strong>Re-flash
                         Letters</strong> button. Each re-flash reduces your potential score for the round by 20%.</li>
-                <li><strong>Scoring & Speed:</strong>
+                <li><strong>Scoring & Time:</strong>
                     <ul>
-                        <li>Points are awarded based on the current display speed (faster speed = more points).</li>
+                        <li>Points are awarded based on the current display time (faster time = more points).</li>
                         <li><strong>Perfect (All letters correct & in order):</strong> Max points for the round! Display
-                            speed for the next round significantly decreases (gets faster).</li>
-                        <li><strong>Correct letters, wrong order:</strong> Good points! Display speed moderately
+                            time for the next round significantly decreases (gets faster).</li>
+                        <li><strong>Correct letters, wrong order:</strong> Good points! Display time moderately
                             decreases.</li>
                         <li><strong>Any incorrect letter / Not all letters identified:</strong> No points for the round.
-                            Display speed slightly increases (gets slower).</li>
+                            Display time slightly increases (gets slower).</li>
                         <li>Each re-flash reduces your score for the round by 20%.</li>
                     </ul>
                 </li>
