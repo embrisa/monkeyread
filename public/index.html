@@ -40,7 +40,7 @@
             <button id="start-button" class="button button-primary">Start Game</button>
             <button id="next-round-button" class="button button-secondary hidden">Next Round</button>
             <div id="next-round-hint" style="display:none"></div>
-            <button id="reflash-button" class="button button-secondary hidden" type="button">Re-flash Letters</button>
+            <button id="reflash-button" class="button button-secondary" type="button">Re-flash Letters</button>
         </div>
 
         <div id="letter-display-area" aria-live="polite" aria-atomic="true">
@@ -52,7 +52,7 @@
             <p id="countdown-message" aria-live="polite" aria-atomic="true"></p>
         </div>
 
-        <div id="input-area" class="hidden">
+        <div id="input-area">
             <p class="input-instruction">Enter the letters in the order seen.</p>
             <div class="letter-inputs-wrapper" id="letter-inputs-wrapper">
                 <!-- Inputs will be dynamically generated here -->
@@ -69,7 +69,7 @@
             <p>Score: <span id="current-score" aria-live="polite">0</span></p>
             <p>Accuracy: <span id="accuracy-rating" aria-live="polite">100%</span></p>
             <p>Time: <span id="current-speed" aria-live="polite">N/A</span> ms</p>
-            <p>Total: <span id="total-time" aria-live="polite">N/A</span> ms</p>
+            <p>Total Time: <span id="total-time" aria-live="polite">N/A</span> ms</p>
         </div>
 
         <div id="instructions">

@@ -110,9 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Core loop: flash N letters, then input area is shown, re-flash is manual
         flashCycleActive = true;
         reflashCount = 0;
-        inputArea.classList.add('hidden');
         submitButton.disabled = true;
-        reflashButton.classList.add('hidden');
         reflashButton.disabled = true;
         flashingLetterDisplay.textContent = '';
         flashingLetterDisplay.style.visibility = 'hidden';
@@ -171,9 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function afterFlashShowInput() {
             if (!flashCycleActive) return;
-            inputArea.classList.remove('hidden');
             submitButton.disabled = false;
-            reflashButton.classList.remove('hidden');
             reflashButton.disabled = false;
             if (letterInputs.length > 0) letterInputs[0].focus();
         }
@@ -188,12 +184,9 @@ document.addEventListener('DOMContentLoaded', () => {
         reflashButton.disabled = true;
         flashingLetterDisplay.textContent = '';
         flashingLetterDisplay.style.visibility = 'hidden';
-        inputArea.classList.add('hidden');
         function afterFlashShowInput() {
             if (!flashCycleActive) return;
-            inputArea.classList.remove('hidden');
             submitButton.disabled = false;
-            reflashButton.classList.remove('hidden');
             reflashButton.disabled = false;
             if (letterInputs.length > 0) letterInputs[0].focus();
         }
@@ -205,7 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
         flashingLetterDisplay.textContent = '';
         flashingLetterDisplay.style.visibility = 'hidden';
         if (pauseCountdownDisplay) pauseCountdownDisplay.textContent = "";
-        reflashButton.classList.add('hidden');
         reflashButton.disabled = true;
     }
 
@@ -239,10 +231,8 @@ document.addEventListener('DOMContentLoaded', () => {
         messageDisplay.className = "";
         countdownMessageDisplay.textContent = "";
         if (pauseCountdownDisplay) pauseCountdownDisplay.textContent = "";
-        inputArea.classList.add('hidden');
         nextRoundButton.classList.add('hidden');
         submitButton.disabled = true;
-        reflashButton.classList.add('hidden');
         reflashButton.disabled = true;
         flashingLetterDisplay.textContent = "";
         flashingLetterDisplay.style.visibility = 'hidden';
@@ -339,7 +329,6 @@ document.addEventListener('DOMContentLoaded', () => {
         stopFlashCycle();
         flashingLetterDisplay.style.visibility = 'hidden';
         flashingLetterDisplay.textContent = "";
-        reflashButton.classList.add('hidden');
         reflashButton.disabled = true;
 
         const userGuess = letterInputs.map(input => input.value.toUpperCase().trim());
@@ -352,7 +341,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         submitButton.disabled = true;
-        inputArea.classList.add('hidden');
 
         // --- Accuracy Calculation ---
         totalLettersAttempted += userGuess.length;

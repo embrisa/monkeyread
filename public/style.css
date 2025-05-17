@@ -317,7 +317,7 @@ li {
 #input-area {
     margin-top: 20px;
     padding: 20px;
-    background: #fff;
+    background: --wood-gradient;
     border-radius: var(--border-radius-medium);
     box-shadow: 0 2px 12px #7AC74F22;
     border: 2px solid var(--color-primary-accent);
@@ -449,8 +449,8 @@ li {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 14px;
-    justify-items: center;
-    align-items: center;
+    justify-items: left;
+    align-items: left;
     width: 100%;
     box-sizing: border-box;
     overflow-wrap: anywhere;
@@ -573,8 +573,7 @@ li {
     }
 
     #letter-display-area {
-        width: 200px;
-        height: 150px;
+        height: 360px;
         padding: 10px;
     }
 
