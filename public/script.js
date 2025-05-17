@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentLeaderboardDifficulty = 1; // Default to difficulty 1
 
     // IMPORTANT: Replace with your Firebase Realtime Database URL
-    const FIREBASE_DB_URL = 'YOUR_FIREBASE_DATABASE_URL_HERE';
+    const FIREBASE_DB_URL = 'https://monkeyread-7082e-default-rtdb.europe-west1.firebasedatabase.app/';
     const MAX_LEADERBOARD_ENTRIES = 10;
 
     // Game State Variables
@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function submitScoreToLeaderboard(playerName, playerScore, gameDifficulty, playerAccuracy) {
-        if (!FIREBASE_DB_URL || FIREBASE_DB_URL === 'YOUR_FIREBASE_DATABASE_URL_HERE') {
+        if (!FIREBASE_DB_URL || FIREBASE_DB_URL === 'https://monkeyread-7082e-default-rtdb.europe-west1.firebasedatabase.app/') {
             console.warn("Firebase URL not configured. Score not submitted.");
             messageDisplay.textContent += " (Leaderboard not configured)";
             return;
@@ -486,6 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
         reflashCount = 0;
         updateTotalTimeDisplay();
         if (nextRoundHint) nextRoundHint.classList.remove('visible-hint');
+        if (playerNameSubmissionArea) playerNameSubmissionArea.classList.add('hidden'); // Hide name input area
     }
 
     function startGame() {
@@ -498,10 +499,12 @@ document.addEventListener('DOMContentLoaded', () => {
         actualDisplaySpeed = initialDisplaySpeed;
         totalLettersAttempted = 0;
         totalLettersCorrect = 0;
+        overallGameAccuracy = 0;
         updateDisplays();
         updateTotalTimeDisplay();
         startButton.textContent = "Restart Game";
         difficultySlider.disabled = true;
+        if (playerNameSubmissionArea) playerNameSubmissionArea.classList.add('hidden'); // Ensure hidden at game start
         proceedToNextRoundSetup();
     }
 
@@ -745,33 +748,35 @@ document.addEventListener('DOMContentLoaded', () => {
             requestAnimationFrame(() => { submitButton.focus(); });
         }
 
-        // Show player name input
+        // Show player name input ONLY at game end
         playerNameInput.value = ''; // Clear previous name
-        playerNameSubmissionArea.classList.remove('hidden');
-        const localSubmitScoreButton = document.getElementById('submit-score-button'); // Ensure we get the latest button
-        localSubmitScoreButton.disabled = false;
-        localSubmitScoreButton.textContent = 'Submit to Leaderboard';
+        if (playerNameSubmissionArea) playerNameSubmissionArea.classList.remove('hidden');
 
-        // Focus on name input
-        playerNameInput.focus();
+        const localSubmitScoreButton = document.getElementById('submit-score-button');
+        if (localSubmitScoreButton) {
+            localSubmitScoreButton.disabled = false;
+            localSubmitScoreButton.textContent = 'Submit to Leaderboard';
 
-        const handleSubmitScoreClick = () => {
-            const playerName = playerNameInput.value.trim();
-            if (playerName.length >= 3 && playerName.length <= 10) {
-                localSubmitScoreButton.disabled = true;
-                localSubmitScoreButton.textContent = 'Submitting...';
-                submitScoreToLeaderboard(playerName, score, numberOfLettersToDisplay, overallGameAccuracy);
-            } else {
-                let originalMessage = messageDisplay.textContent;
-                messageDisplay.textContent = "Name must be 3-10 characters. " + originalMessage.split(" Name must be")[0]; // Avoid appending multiple times
-                playerNameInput.focus();
-            }
-        };
+            // Focus on name input
+            if (playerNameInput) playerNameInput.focus();
 
-        // Remove previous listener if any to prevent multiple submissions
-        const newSubmitScoreButton = localSubmitScoreButton.cloneNode(true);
-        localSubmitScoreButton.parentNode.replaceChild(newSubmitScoreButton, localSubmitScoreButton);
-        document.getElementById('submit-score-button').addEventListener('click', handleSubmitScoreClick);
+            const handleSubmitScoreClick = () => {
+                const playerName = playerNameInput.value.trim();
+                if (playerName.length >= 3 && playerName.length <= 10) {
+                    localSubmitScoreButton.disabled = true;
+                    localSubmitScoreButton.textContent = 'Submitting...';
+                    submitScoreToLeaderboard(playerName, score, numberOfLettersToDisplay, overallGameAccuracy);
+                } else {
+                    let originalMessage = messageDisplay.textContent;
+                    messageDisplay.textContent = "Name must be 3-10 characters. " + originalMessage.split(" Name must be")[0];
+                    if (playerNameInput) playerNameInput.focus();
+                }
+            };
+
+            const newSubmitScoreButton = localSubmitScoreButton.cloneNode(true);
+            localSubmitScoreButton.parentNode.replaceChild(newSubmitScoreButton, localSubmitScoreButton);
+            document.getElementById('submit-score-button').addEventListener('click', handleSubmitScoreClick);
+        }
     }
 
     function endGame() {
@@ -1051,7 +1056,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const chosenEmoji = bracket.emoji[Math.floor(Math.random() * bracket.emoji.length)];
         const chosenMsg = bracket.messages[Math.floor(Math.random() * bracket.messages.length)];
         // Show both raw score and difficulty in the message
-        const gameOverMsg = `${chosenEmoji} ${chosenMsg} Final Score: ${score} (Difficulty: ${numberOfLettersToDisplay} letters) in ${MAX_ROUNDS} rounds.`;
+        const gameOverMsg = `${chosenEmoji} ${chosenMsg} Final Score: ${score} (Difficulty: ${numberOfLettersToDisplay} letters, Accuracy: ${overallGameAccuracy.toFixed(1)}%) in ${MAX_ROUNDS} rounds.`;
         messageDisplay.textContent = gameOverMsg;
         messageDisplay.className = "bonus";
         submitButton.disabled = true;
@@ -1061,7 +1066,36 @@ document.addEventListener('DOMContentLoaded', () => {
         startButton.textContent = "Play Again?";
         difficultySlider.disabled = false;
         if (nextRoundHint) nextRoundHint.classList.remove('visible-hint');
-        updateDisplays();
+
+        // Show player name input ONLY at game end
+        playerNameInput.value = ''; // Clear previous name
+        if (playerNameSubmissionArea) playerNameSubmissionArea.classList.remove('hidden');
+
+        const localSubmitScoreButton = document.getElementById('submit-score-button');
+        if (localSubmitScoreButton) {
+            localSubmitScoreButton.disabled = false;
+            localSubmitScoreButton.textContent = 'Submit to Leaderboard';
+
+            // Focus on name input
+            if (playerNameInput) playerNameInput.focus();
+
+            const handleSubmitScoreClick = () => {
+                const playerName = playerNameInput.value.trim();
+                if (playerName.length >= 3 && playerName.length <= 10) {
+                    localSubmitScoreButton.disabled = true;
+                    localSubmitScoreButton.textContent = 'Submitting...';
+                    submitScoreToLeaderboard(playerName, score, numberOfLettersToDisplay, overallGameAccuracy);
+                } else {
+                    let originalMessage = messageDisplay.textContent;
+                    messageDisplay.textContent = "Name must be 3-10 characters. " + originalMessage.split(" Name must be")[0];
+                    if (playerNameInput) playerNameInput.focus();
+                }
+            };
+
+            const newSubmitScoreButton = localSubmitScoreButton.cloneNode(true);
+            localSubmitScoreButton.parentNode.replaceChild(newSubmitScoreButton, localSubmitScoreButton);
+            document.getElementById('submit-score-button').addEventListener('click', handleSubmitScoreClick);
+        }
     }
 
     function updateDifficulty() {
