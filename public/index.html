@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monkeyread - Dynamic Focus Challenge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700&family=Open+Sans:wght@400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header class="game-header">
+            <h1>Monkeyread</h1>
+            <p class="tagline">Adapt your focus, master the speed.</p>
+        </header>
+
+        <div id="game-options">
+            <fieldset id="game-mode-selection">
+                <legend>Game Mode</legend>
+                <label>
+                    <input type="radio" name="gameMode" value="classic" checked> Classic Sequential
+                </label>
+                <label>
+                    <input type="radio" name="gameMode" value="looping"> Looping Letters
+                </label>
+            </fieldset>
+            <fieldset id="progression-style-selection">
+                <legend>Progression Style</legend>
+                <label>
+                    <input type="radio" name="progressionStyle" value="auto" checked> Automatic (3s timer)
+                </label>
+                <label>
+                    <input type="radio" name="progressionStyle" value="manual"> Manual Next Round
+                </label>
+            </fieldset>
+        </div>
+
+        <div id="controls-area">
+            <button id="start-button" class="button button-primary">Start Game</button>
+            <button id="next-round-button" class="button button-secondary hidden">Next Round</button>
+        </div>
+
+        <div id="letter-display-area" aria-live="polite" aria-atomic="true">
+            <span id="flashing-letter"></span>
+        </div>
+
+        <div id="countdown-area">
+            <p id="countdown-message" aria-live="polite" aria-atomic="true"></p>
+        </div>
+
+        <div id="input-area" class="hidden">
+            <p class="input-instruction">Enter the glyphs in the order seen. Input boxes are color-coded:
+                <span class="color-hint pos1">Red (1st)</span>,
+                <span class="color-hint pos2">Green (2nd)</span>,
+                <span class="color-hint pos3">Blue (3rd)</span>.
+            </p>
+            <div class="letter-inputs-wrapper">
+                <input type="text" id="letter1" class="input-pos-1" maxlength="1" placeholder="1st"
+                    aria-label="First letter (Red slot)">
+                <input type="text" id="letter2" class="input-pos-2" maxlength="1" placeholder="2nd"
+                    aria-label="Second letter (Green slot)">
+                <input type="text" id="letter3" class="input-pos-3" maxlength="1" placeholder="3rd"
+                    aria-label="Third letter (Blue slot)">
+            </div>
+            <button id="submit-button" class="button button-submit">Submit Answer</button>
+        </div>
+
+        <div id="feedback-area">
+            <p id="message" aria-live="polite" aria-atomic="true"></p>
+        </div>
+
+        <div id="score-area">
+            <p>Round: <span id="current-level" aria-live="polite">1</span></p>
+            <p>Score: <span id="current-score" aria-live="polite">0</span></p>
+            <p>Speed: <span id="current-speed" aria-live="polite">N/A</span> ms</p>
+        </div>
+
+        <div id="instructions">
+            <h2>How to Play Monkeyread</h2>
+            <ol>
+                <li>Select your Game Mode and Progression Style.</li>
+                <li>Click "Start Game". Glyphs (letters) will flash. Pay attention to their order!</li>
+                <li>The input boxes are color-coded for order:
+                    <span class="color-hint pos1">Red (1st)</span>,
+                    <span class="color-hint pos2">Green (2nd)</span>,
+                    <span class="color-hint pos3">Blue (3rd)</span>.
+                    Enter the glyphs you saw into the corresponding colored slots.
+                </li>
+                <li><strong>Scoring & Speed:</strong>
+                    <ul>
+                        <li>Points are awarded based on the current display speed (faster speed = more points).</li>
+                        <li><strong>Perfect (All glyphs correct & in order):</strong> Max points for the round! Display
+                            speed for the
+                            next round significantly decreases (gets faster).</li>
+                        <li><strong>Correct glyphs, wrong order:</strong> Good points! Display speed moderately
+                            decreases.</li>
+                        <li><strong>Any incorrect glyph / Not all glyphs identified:</strong> No points for the round.
+                            Display speed
+                            slightly increases (gets slower).</li>
+                    </ul>
+                </li>
+                <li><strong>Progression:</strong> Based on your "Progression Style" selection.</li>
+                <li>The game continues, adapting the speed to your performance. Aim for precision and speed!</li>
+            </ol>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

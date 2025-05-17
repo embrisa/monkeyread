@@ -1,0 +1,342 @@
+document.addEventListener('DOMContentLoaded', () => {
+    // DOM Elements
+    const flashingLetterDisplay = document.getElementById('flashing-letter');
+    const startButton = document.getElementById('start-button');
+    const nextRoundButton = document.getElementById('next-round-button');
+    const submitButton = document.getElementById('submit-button');
+    const inputArea = document.getElementById('input-area');
+    const letterInputs = [
+        document.getElementById('letter1'),
+        document.getElementById('letter2'),
+        document.getElementById('letter3')
+    ];
+    const messageDisplay = document.getElementById('message');
+    const currentLevelDisplay = document.getElementById('current-level'); // Now represents "Round"
+    const currentScoreDisplay = document.getElementById('current-score');
+    const currentSpeedDisplay = document.getElementById('current-speed');
+    const countdownMessageDisplay = document.getElementById('countdown-message');
+    const gameModeRadios = document.querySelectorAll('input[name="gameMode"]');
+    const progressionStyleRadios = document.querySelectorAll('input[name="progressionStyle"]');
+
+    // Game State Variables
+    let currentLetters = [];
+    let currentRound = 1;
+    let score = 0;
+    let gameActive = false;
+    let lettersDisplayed = false;
+    let selectedGameMode = "classic";
+    let selectedProgressionStyle = "auto";
+
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    // Timers and Intervals
+    let loopIntervalId = null;
+    let isLoopingActive = false;
+    let loopCounter = 0;
+    let countdownIntervalId = null;
+
+    // --- Dynamic Speed and Scoring Logic ---
+    let actualDisplaySpeed = 500; // This will be dynamically adjusted
+    const initialDisplaySpeed = 500; // Base speed to start and for score calculation reference
+    const minPracticalDisplaySpeed = 20; // Practical floor for setTimeout and perception
+    const maxDisplaySpeed = 700; // A cap if speed gets too slow
+
+    const defaultSpeedChangeOnCorrect = 25; // ms, base speed decrease for correct letters (wrong order)
+    const perfectRoundSpeedBoost = 20;    // ms, additional speed decrease for perfect round
+    const mistakeSpeedPenalty = 30;       // ms, speed increase on any error
+
+    const basePointsPerLetter = 5;       // Base points before speed multiplier
+    const orderBonusBasePoints = 10;     // Base bonus points before speed multiplier
+
+
+    // --- Utility Functions ---
+    function getRandomLetter() {
+        return alphabet[Math.floor(Math.random() * alphabet.length)];
+    }
+
+    function generateLetters() {
+        currentLetters = [];
+        while (currentLetters.length < 3) {
+            const letter = getRandomLetter();
+            if (!currentLetters.includes(letter)) {
+                currentLetters.push(letter);
+            }
+        }
+    }
+
+    function updateSelectedOptions() {
+        for (const radio of gameModeRadios) {
+            if (radio.checked) selectedGameMode = radio.value;
+        }
+        for (const radio of progressionStyleRadios) {
+            if (radio.checked) selectedProgressionStyle = radio.value;
+        }
+    }
+
+    function toggleOptionsInputs(enable) {
+        gameModeRadios.forEach(radio => radio.disabled = !enable);
+        progressionStyleRadios.forEach(radio => radio.disabled = !enable);
+    }
+
+    // --- Display Logic ---
+    async function displayLettersSequential() {
+        lettersDisplayed = false;
+        flashingLetterDisplay.style.visibility = 'hidden';
+        await new Promise(resolve => setTimeout(resolve, 300)); // Short pause before sequence
+
+        for (let i = 0; i < 3; i++) {
+            flashingLetterDisplay.textContent = currentLetters[i];
+            flashingLetterDisplay.style.visibility = 'visible';
+            await new Promise(resolve => setTimeout(resolve, actualDisplaySpeed));
+            flashingLetterDisplay.style.visibility = 'hidden';
+            if (i < 2) { // Pause between letters
+                await new Promise(resolve => setTimeout(resolve, Math.max(10, actualDisplaySpeed / 3)));
+            }
+        }
+        flashingLetterDisplay.textContent = ""; // Clear display
+        inputArea.classList.remove('hidden');
+        letterInputs.forEach(input => input.value = '');
+        letterInputs[0].focus();
+        submitButton.disabled = false;
+        lettersDisplayed = true;
+    }
+
+    function startLetterLoop() {
+        stopLetterLoop();
+        isLoopingActive = true;
+        loopCounter = 0;
+        flashingLetterDisplay.style.visibility = 'visible';
+
+        function showNextLoopLetter() {
+            if (!isLoopingActive) return;
+            flashingLetterDisplay.textContent = currentLetters[loopCounter % 3];
+            loopCounter++;
+        }
+        showNextLoopLetter(); // Show first letter immediately
+        loopIntervalId = setInterval(showNextLoopLetter, actualDisplaySpeed); // Use actualDisplaySpeed
+
+        inputArea.classList.remove('hidden');
+        letterInputs.forEach(input => input.value = '');
+        letterInputs[0].focus();
+        submitButton.disabled = false;
+    }
+
+    function stopLetterLoop() {
+        if (loopIntervalId) clearInterval(loopIntervalId);
+        isLoopingActive = false;
+    }
+
+    // --- Game Flow & UI Updates ---
+    function updateDisplays() {
+        currentLevelDisplay.textContent = currentRound;
+        currentScoreDisplay.textContent = score;
+        currentSpeedDisplay.textContent = gameActive ? actualDisplaySpeed : "N/A";
+    }
+
+    function resetUIForNewRound() { // Renamed from resetUIForNewGame for clarity
+        messageDisplay.textContent = "";
+        messageDisplay.className = "";
+        countdownMessageDisplay.textContent = "";
+        inputArea.classList.add('hidden');
+        nextRoundButton.classList.add('hidden');
+        submitButton.disabled = true;
+        flashingLetterDisplay.textContent = "";
+        flashingLetterDisplay.style.visibility = 'hidden';
+        if (countdownIntervalId) clearInterval(countdownIntervalId);
+        stopLetterLoop();
+    }
+
+    function startGame() {
+        gameActive = true;
+        updateSelectedOptions();
+        resetUIForNewRound(); // Use the round reset
+        toggleOptionsInputs(false);
+
+        currentRound = 1;
+        score = 0;
+        actualDisplaySpeed = initialDisplaySpeed; // Reset speed to initial
+        updateDisplays();
+        startButton.textContent = "Restart Game";
+
+        proceedToNextRoundSetup();
+    }
+
+    function advanceToNextRound() { // Renamed from advanceLevel
+        currentRound++;
+        // actualDisplaySpeed is adjusted in handleAnswerSubmitted, not here directly by level
+        updateDisplays(); // Update round number
+        proceedToNextRoundSetup();
+    }
+
+    function proceedToNextRoundSetup() {
+        resetUIForNewRound();
+        generateLetters();
+        currentSpeedDisplay.textContent = actualDisplaySpeed; // Ensure speed is updated for this round
+
+        if (selectedGameMode === "classic") {
+            displayLettersSequential();
+        } else if (selectedGameMode === "looping") {
+            startLetterLoop();
+        }
+    }
+
+    function handleAnswerSubmitted() {
+        if (selectedGameMode === "classic" && !lettersDisplayed) return;
+
+        if (selectedGameMode === "looping") {
+            stopLetterLoop();
+            flashingLetterDisplay.style.visibility = 'hidden';
+            flashingLetterDisplay.textContent = "";
+        }
+
+        const userGuess = letterInputs.map(input => input.value.toUpperCase().trim());
+
+        if (userGuess.some(letter => letter.length !== 1 || !alphabet.includes(letter))) {
+            messageDisplay.textContent = "Please enter a valid single letter in all boxes.";
+            messageDisplay.className = "incorrect";
+            if (gameActive) submitButton.disabled = false;
+            return;
+        }
+
+        submitButton.disabled = true;
+        inputArea.classList.add('hidden');
+
+        let roundScore = 0;
+        let feedbackMessage = "";
+        let speedChangeMessage = "";
+
+        // Check for any letter typed that was NOT in currentLetters
+        const incorrectLettersTyped = userGuess.filter(ul => !currentLetters.includes(ul));
+        // Check if all letters from currentLetters were present in the user's guess
+        const allTargetLettersGuessedCorrectly = currentLetters.every(cl => userGuess.includes(cl)) &&
+            userGuess.length === currentLetters.length &&
+            new Set(userGuess).size === currentLetters.length;
+
+
+        if (incorrectLettersTyped.length > 0 || !allTargetLettersGuessedCorrectly) {
+            // MISTAKE: Either an invalid letter was typed, or not all correct letters were identified
+            roundScore = 0;
+            actualDisplaySpeed = Math.min(maxDisplaySpeed, actualDisplaySpeed + mistakeSpeedPenalty);
+            speedChangeMessage = "Speed decreased slightly.";
+            if (incorrectLettersTyped.length > 0) {
+                feedbackMessage = `Oops! '${incorrectLettersTyped.join(', ')}' wasn't shown. No points.`;
+            } else {
+                feedbackMessage = `Not quite all letters identified. No points.`;
+            }
+            feedbackMessage += ` Glyphs were: ${currentLetters.join(', ')}.`;
+            messageDisplay.className = "incorrect";
+        } else {
+            // All letters identified are correct and all target letters were identified. Now check order.
+            const isOrderPerfect = userGuess.every((letter, index) => letter === currentLetters[index]);
+            const speedMultiplier = Math.max(0.2, initialDisplaySpeed / actualDisplaySpeed); // Min multiplier 0.2
+
+            let baseRoundPoints = basePointsPerLetter * currentLetters.length * speedMultiplier;
+            roundScore = baseRoundPoints;
+
+            if (isOrderPerfect) {
+                roundScore += orderBonusBasePoints * speedMultiplier;
+                feedbackMessage = `Perfect! All correct and in order!`;
+                actualDisplaySpeed = Math.max(minPracticalDisplaySpeed, actualDisplaySpeed - defaultSpeedChangeOnCorrect - perfectRoundSpeedBoost);
+                speedChangeMessage = "Speed increased significantly!";
+                messageDisplay.className = "bonus";
+            } else {
+                feedbackMessage = `All glyphs correct, but wrong order.`;
+                actualDisplaySpeed = Math.max(minPracticalDisplaySpeed, actualDisplaySpeed - defaultSpeedChangeOnCorrect);
+                speedChangeMessage = "Speed increased.";
+                messageDisplay.className = "correct";
+            }
+            feedbackMessage += ` +${Math.round(roundScore)} points. Glyphs: ${currentLetters.join(', ')}.`;
+        }
+
+        messageDisplay.textContent = feedbackMessage + " " + speedChangeMessage;
+        score += Math.round(roundScore); // Add roundScore (0 if mistake)
+        updateDisplays(); // Update score, round, and new speed display
+
+        if (gameActive) {
+            if (selectedProgressionStyle === "auto") {
+                startNextRoundCountdown();
+            } else {
+                nextRoundButton.classList.remove('hidden');
+                nextRoundButton.disabled = false;
+            }
+        }
+        lettersDisplayed = false; // Reset for classic mode
+    }
+
+    function startNextRoundCountdown() {
+        nextRoundButton.classList.add('hidden');
+        let count = 3;
+        countdownMessageDisplay.textContent = `Next round in ${count}...`;
+        if (countdownIntervalId) clearInterval(countdownIntervalId);
+
+        countdownIntervalId = setInterval(() => {
+            count--;
+            if (count > 0) {
+                countdownMessageDisplay.textContent = `Next round in ${count}...`;
+            } else if (count === 0) {
+                countdownMessageDisplay.textContent = "Starting next round!";
+            } else {
+                clearInterval(countdownIntervalId);
+                countdownMessageDisplay.textContent = "";
+                if (gameActive) advanceToNextRound();
+            }
+        }, 1000);
+    }
+
+    // --- Event Listeners ---
+    startButton.addEventListener('click', () => {
+        stopLetterLoop();
+        if (countdownIntervalId) clearInterval(countdownIntervalId);
+        gameActive = false;
+        toggleOptionsInputs(true);
+        startGame();
+    });
+
+    nextRoundButton.addEventListener('click', () => {
+        if (gameActive && selectedProgressionStyle === "manual") {
+            nextRoundButton.classList.add('hidden');
+            nextRoundButton.disabled = true;
+            countdownMessageDisplay.textContent = "";
+            advanceToNextRound();
+        }
+    });
+
+    submitButton.addEventListener('click', handleAnswerSubmitted);
+
+    letterInputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+            // Auto-uppercase and move to next input
+            e.target.value = e.target.value.toUpperCase();
+            if (e.target.value.length === 1 && index < letterInputs.length - 1) {
+                letterInputs[index + 1].focus();
+            }
+        });
+        input.addEventListener('keydown', (event) => {
+            // Move to previous input on backspace if current is empty
+            if (event.key === "Backspace" && input.value.length === 0 && index > 0) {
+                letterInputs[index - 1].focus();
+            }
+            // Submit on Enter from last input
+            if (event.key === 'Enter' && index === letterInputs.length - 1 && !submitButton.disabled) {
+                handleAnswerSubmitted();
+            }
+        });
+    });
+
+    [...gameModeRadios, ...progressionStyleRadios].forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (!gameActive) {
+                updateSelectedOptions();
+            } else {
+                if (radio.name === "gameMode") radio.checked = (radio.value === selectedGameMode);
+                if (radio.name === "progressionStyle") radio.checked = (radio.value === selectedProgressionStyle);
+            }
+        });
+    });
+
+    // Initial Setup
+    updateSelectedOptions();
+    updateDisplays();
+    toggleOptionsInputs(true);
+    resetUIForNewRound();
+});

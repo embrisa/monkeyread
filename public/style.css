@@ -1,0 +1,525 @@
+/* --- Monkeyread Theme --- */
+:root {
+    --font-heading: 'Nunito Sans', sans-serif;
+    --font-body: 'Open Sans', sans-serif;
+
+    --color-bg: #FFFBF5;
+    /* Cosmic Latte */
+    --color-text: #5D5C61;
+    /* Slate Gray */
+    --color-text-light: #7E7C80;
+
+    --color-primary-accent: #77ACA2;
+    /* Muted Teal */
+    --color-primary-accent-hover: #64998D;
+    --color-secondary-accent: #FFCCB6;
+    /* Soft Peach */
+
+    --color-letter-flash-bg: #FAF0E6;
+    --color-letter-flash-text: #B56576;
+    /* Muted Berry */
+
+    --color-success: #8FBC8F;
+    /* Dark Sea Green */
+    --color-alert: #E07A5F;
+    /* Terracotta */
+    --color-info: #6A8EAE;
+    /* Soft Dusty Blue */
+
+    /* Input Position Colors */
+    --color-pos-1: var(--color-alert);
+    /* Reddish - Terracotta */
+    --color-pos-2: var(--color-success);
+    /* Greenish - Dark Sea Green */
+    --color-pos-3: var(--color-info);
+    /* Bluish - Soft Dusty Blue */
+
+    --border-radius-soft: 6px;
+    --border-radius-medium: 8px;
+    --shadow-subtle: 0 2px 8px rgba(93, 83, 74, 0.08);
+    --shadow-interactive: 0 1px 3px rgba(93, 83, 74, 0.12);
+}
+
+/* --- Base & Typography --- */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-body);
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.65;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+h1,
+h2,
+h3,
+h4,
+legend {
+    font-family: var(--font-heading);
+    color: var(--color-primary-accent);
+    margin-bottom: 0.75em;
+    line-height: 1.3;
+}
+
+h1 {
+    font-size: 2.5rem;
+    color: var(--color-text);
+    margin-bottom: 0.25em;
+}
+
+h2 {
+    font-size: 1.5rem;
+    border-bottom: 1px solid var(--color-secondary-accent);
+    padding-bottom: 0.3em;
+    margin-top: 1.5em;
+}
+
+legend {
+    font-size: 1.2rem;
+    font-weight: 700;
+    padding: 0 0.5em;
+}
+
+p {
+    margin-bottom: 1em;
+}
+
+ul,
+ol {
+    margin-bottom: 1em;
+    padding-left: 20px;
+}
+
+li {
+    margin-bottom: 0.5em;
+}
+
+/* --- Layout & Container --- */
+.container {
+    background-color: #FFFFFF;
+    padding: 25px 40px;
+    border-radius: var(--border-radius-medium);
+    box-shadow: var(--shadow-subtle);
+    text-align: center;
+    width: 100%;
+    max-width: 700px;
+}
+
+.game-header {
+    margin-bottom: 25px;
+}
+
+.tagline {
+    font-size: 1.1rem;
+    color: var(--color-text-light);
+    margin-top: -0.5em;
+}
+
+/* --- Game Options --- */
+#game-options {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    gap: 20px;
+    margin-bottom: 25px;
+    padding: 15px;
+    background-color: var(--color-bg);
+    border-radius: var(--border-radius-soft);
+}
+
+#game-mode-selection,
+#progression-style-selection {
+    text-align: left;
+    flex: 1;
+    min-width: 250px;
+}
+
+#game-options fieldset {
+    border: 1px solid var(--color-secondary-accent);
+    padding: 15px 20px 20px 20px;
+    border-radius: var(--border-radius-soft);
+}
+
+#game-options label {
+    display: block;
+    margin-bottom: 0.8em;
+    cursor: pointer;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+}
+
+#game-options input[type="radio"] {
+    margin-right: 8px;
+    accent-color: var(--color-primary-accent);
+}
+
+/* --- Controls & Buttons --- */
+#controls-area {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.button {
+    border: none;
+    padding: 12px 25px;
+    font-size: 1rem;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    border-radius: var(--border-radius-soft);
+    cursor: pointer;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+    box-shadow: var(--shadow-interactive);
+}
+
+.button:hover {
+    box-shadow: var(--shadow-subtle);
+}
+
+.button:active {
+    transform: translateY(1px);
+    box-shadow: none;
+}
+
+.button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.button-primary {
+    background-color: var(--color-primary-accent);
+    color: white;
+}
+
+.button-primary:hover:not(:disabled) {
+    background-color: var(--color-primary-accent-hover);
+}
+
+.button-secondary {
+    background-color: var(--color-secondary-accent);
+    color: var(--color-text);
+}
+
+.button-secondary:hover:not(:disabled) {
+    background-color: #FFBDA2;
+}
+
+.button-submit {
+    background-color: var(--color-letter-flash-text);
+    color: white;
+}
+
+.button-submit:hover:not(:disabled) {
+    background-color: #A25268;
+}
+
+/* --- Letter Display --- */
+#letter-display-area {
+    width: 160px;
+    height: 160px;
+    background-color: var(--color-letter-flash-bg);
+    border: 2px solid var(--color-secondary-accent);
+    margin: 25px auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: var(--border-radius-medium);
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+#flashing-letter {
+    font-family: var(--font-heading);
+    font-size: 90px;
+    font-weight: 700;
+    color: var(--color-letter-flash-text);
+    visibility: hidden;
+}
+
+/* --- Input Area --- */
+#input-area {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: var(--color-bg);
+    border-radius: var(--border-radius-soft);
+}
+
+.input-instruction {
+    font-size: 0.95rem;
+    /* Slightly smaller */
+    color: var(--color-text-light);
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.color-hint {
+    font-weight: 600;
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+    color: white;
+    /* White text on colored bg for hints */
+}
+
+.color-hint.pos1 {
+    background-color: var(--color-pos-1);
+}
+
+.color-hint.pos2 {
+    background-color: var(--color-pos-2);
+}
+
+.color-hint.pos3 {
+    background-color: var(--color-pos-3);
+}
+
+.letter-inputs-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+#input-area input[type="text"] {
+    width: 60px;
+    height: 60px;
+    text-align: center;
+    font-size: 1.8rem;
+    font-family: var(--font-heading);
+    border: 2px solid var(--color-secondary-accent);
+    /* Default border */
+    border-radius: var(--border-radius-soft);
+    text-transform: uppercase;
+    background-color: #FFFFFF;
+    color: var(--color-text);
+    box-shadow: var(--shadow-interactive);
+    transition: border-color 0.2s ease;
+}
+
+/* Color-coded input borders */
+#input-area input[type="text"].input-pos-1 {
+    border-color: var(--color-pos-1);
+}
+
+#input-area input[type="text"].input-pos-2 {
+    border-color: var(--color-pos-2);
+}
+
+#input-area input[type="text"].input-pos-3 {
+    border-color: var(--color-pos-3);
+}
+
+#input-area input[type="text"]::placeholder {
+    color: var(--color-text-light);
+    opacity: 0.7;
+    font-size: 1.2rem;
+    /* Smaller placeholder */
+}
+
+#input-area input[type="text"].input-pos-1::placeholder {
+    color: var(--color-pos-1);
+}
+
+#input-area input[type="text"].input-pos-2::placeholder {
+    color: var(--color-pos-2);
+}
+
+#input-area input[type="text"].input-pos-3::placeholder {
+    color: var(--color-pos-3);
+}
+
+
+#input-area input[type="text"]:focus {
+    outline: none;
+    /* Handled by border change or more prominent focus-visible */
+    border-width: 3px;
+    /* Thicker border on focus */
+}
+
+#input-area input[type="text"].input-pos-1:focus {
+    border-color: var(--color-pos-1);
+}
+
+#input-area input[type="text"].input-pos-2:focus {
+    border-color: var(--color-pos-2);
+}
+
+#input-area input[type="text"].input-pos-3:focus {
+    border-color: var(--color-pos-3);
+}
+
+
+/* --- Feedback & Score --- */
+#countdown-area {
+    min-height: 30px;
+    margin: 15px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-primary-accent);
+}
+
+#feedback-area {
+    margin-top: 20px;
+    min-height: 25px;
+    font-size: 1.05rem;
+}
+
+#message {
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: var(--border-radius-soft);
+    display: inline-block;
+}
+
+#message.correct {
+    color: var(--color-success);
+    background-color: #e8f5e9;
+}
+
+#message.incorrect {
+    color: var(--color-alert);
+    background-color: #fff3e0;
+}
+
+#message.bonus {
+    color: var(--color-info);
+    background-color: #e3f2fd;
+}
+
+#message:empty {
+    padding: 0;
+}
+
+
+#score-area {
+    margin-top: 25px;
+    font-size: 1rem;
+    padding: 15px;
+    background-color: var(--color-bg);
+    border-radius: var(--border-radius-soft);
+    color: var(--color-text-light);
+}
+
+#score-area p {
+    margin: 8px 0;
+}
+
+#score-area span {
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+/* --- Instructions --- */
+#instructions {
+    margin-top: 30px;
+    text-align: left;
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    padding: 20px;
+    border-top: 1px solid var(--color-secondary-accent);
+}
+
+#instructions h2 {
+    margin-top: 0;
+    color: var(--color-primary-accent);
+    text-align: center;
+    font-size: 1.3rem;
+}
+
+#instructions ul {
+    list-style-type: disc;
+    padding-left: 25px;
+}
+
+#instructions ul li {
+    margin-bottom: 0.3em;
+}
+
+
+/* --- Utility --- */
+.hidden {
+    display: none !important;
+}
+
+/* --- Accessibility: Focus Visible --- */
+*:focus-visible {
+    outline: 3px solid var(--color-primary-accent);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px var(--color-bg), 0 0 0 6px var(--color-primary-accent);
+}
+
+#input-area input[type="text"]:focus-visible {
+    outline: none;
+    /* Already handled by its :focus border change */
+    box-shadow: none;
+}
+
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+
+    .container {
+        padding: 20px 15px;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    h2,
+    legend {
+        font-size: 1.2rem;
+    }
+
+    #game-options {
+        flex-direction: column;
+    }
+
+    .button {
+        padding: 10px 20px;
+        font-size: 0.95rem;
+    }
+
+    #letter-display-area {
+        width: 120px;
+        height: 120px;
+    }
+
+    #flashing-letter {
+        font-size: 70px;
+    }
+
+    #input-area input[type="text"] {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+
+    .letter-inputs-wrapper {
+        gap: 5px;
+    }
+
+    .input-instruction {
+        font-size: 0.9rem;
+    }
+
+    #instructions {
+        padding: 15px 5px;
+    }
+}
