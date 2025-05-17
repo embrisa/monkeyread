@@ -47,11 +47,6 @@
 
         <div id="feedback-area">
             <p id="message" aria-live="polite" aria-atomic="true"></p>
-            <div id="player-name-submission-area" class="hidden">
-                <input type="text" id="player-name-input" placeholder="Enter your name (3-10 chars)" maxlength="10"
-                    minlength="3">
-                <button id="submit-score-button" class="button button-secondary">Submit to Leaderboard</button>
-            </div>
         </div>
 
         <div id="next-round-hint"></div>
@@ -91,18 +86,6 @@
                 <li>The game gets faster if you do well, and slower if you make mistakes.</li>
                 <li>Click <strong>Next Round</strong> (or press Enter) to keep playing.</li>
                 <li>Try to get the highest score in 16 rounds!</li>
-            </ol>
-        </div>
-
-        <div id="leaderboard-container" class="container">
-            <h2>🏆 Leaderboard ��</h2>
-            <div id="leaderboard-difficulty-selector">
-                <!-- Difficulty selection buttons will be added here by JS -->
-                <span class="selector-label">Difficulty:</span>
-            </div>
-            <p id="leaderboard-message">Select a difficulty to view scores.</p>
-            <ol id="leaderboard-list">
-                <!-- Scores will be populated by JavaScript -->
             </ol>
         </div>
     </div>
