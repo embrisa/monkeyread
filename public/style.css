@@ -793,3 +793,11 @@ li {
     vertical-align: middle;
     letter-spacing: 1px;
 }
+
+.difficulty-slider-row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin: 10px 0 0 0;
+    justify-content: center;
+}
