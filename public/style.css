@@ -287,11 +287,11 @@ li {
     box-shadow: 0 4px 24px #0003;
     visibility: hidden;
     transition: none;
-    display: inline-block;
-    margin: 0 auto;
-    max-width: 90%;
-    max-height: 90%;
-    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    box-sizing: border-box;
 }
 
 /* --- Input Area --- */
