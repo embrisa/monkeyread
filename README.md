@@ -47,7 +47,7 @@ Monkeyread is a fast-paced, focus-driven memory game designed to challenge and i
 - **Correct glyphs, wrong order:** Good points! Display speed moderately decreases.
 - **Any incorrect glyph / Not all glyphs identified:** No points for the round. Display speed slightly increases (gets slower).
 - **Each re-flash reduces your score for the round by 20%.**
-- **Time per Letter:** The "Speed" or "Letter Time" shown in the scoreboard is the number of milliseconds each letter is displayed during the flashing sequence. The total time to display the full sequence is (Letter Time × Number of Letters). Faster letter times mean a greater challenge and higher potential score.
+- **Speed:** The "Speed" shown in the scoreboard is the number of milliseconds each letter is displayed during the flashing sequence (not the total time for the whole sequence). The total time to display the full sequence is (Speed × Number of Letters).
 - **Accuracy Score:** The "Accuracy" shown in the scoreboard is the percentage of letters you have entered correctly (including partial credit for correct letters in the wrong position) out of all letters attempted during the session. This helps you track your overall precision, not just your score.
 
 **8. User Experience Flow:**

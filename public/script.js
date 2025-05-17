@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentLevelDisplay = document.getElementById('current-level'); // Now represents "Round"
     const currentScoreDisplay = document.getElementById('current-score');
     const currentSpeedDisplay = document.getElementById('current-speed');
-    const letterTimeDisplay = document.getElementById('letter-time');
     const countdownMessageDisplay = document.getElementById('countdown-message');
     const difficultySlider = document.getElementById('difficulty-slider');
     const difficultyValue = document.getElementById('difficulty-value');
@@ -208,7 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
         currentLevelDisplay.textContent = currentRound;
         currentScoreDisplay.textContent = score;
         currentSpeedDisplay.textContent = gameActive ? actualDisplaySpeed : "N/A";
-        letterTimeDisplay.textContent = gameActive ? actualDisplaySpeed : "N/A";
         // Update accuracy rating
         if (totalLettersAttempted === 0) {
             accuracyRatingDisplay.textContent = '100%';
