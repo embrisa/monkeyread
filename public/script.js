@@ -191,8 +191,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 let elapsed = now - pauseStart;
                 if (elapsed >= 3000) {
                     reflashCount++;
-                    inputArea.classList.add('hidden');
-                    submitButton.disabled = true;
                     flashLettersSequence(startPauseAndMaybeReflash);
                 } else {
                     reflashTimeoutId = requestAnimationFrame(pauseStep);
@@ -424,24 +422,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     submitButton.addEventListener('click', handleAnswerSubmitted);
 
-    letterInputs.forEach((input, index) => {
-        input.addEventListener('input', (e) => {
-            // Auto-uppercase and move to next input
-            e.target.value = e.target.value.toUpperCase();
-            if (e.target.value.length === 1 && index < letterInputs.length - 1) {
-                letterInputs[index + 1].focus();
+    // Add event listeners to letterInputsWrapper using event delegation
+    letterInputsWrapper.addEventListener('input', (e) => {
+        if (e.target.tagName === 'INPUT' && e.target.type === 'text') {
+            const currentInput = e.target;
+            currentInput.value = currentInput.value.toUpperCase(); // Auto-uppercase
+
+            const currentIndex = letterInputs.indexOf(currentInput);
+
+            if (currentInput.value.length === 1 && currentIndex !== -1 && currentIndex < letterInputs.length - 1) {
+                letterInputs[currentIndex + 1].focus();
             }
-        });
-        input.addEventListener('keydown', (event) => {
-            // Move to previous input on backspace if current is empty
-            if (event.key === "Backspace" && input.value.length === 0 && index > 0) {
-                letterInputs[index - 1].focus();
+        }
+    });
+
+    letterInputsWrapper.addEventListener('keydown', (event) => {
+        if (event.target.tagName === 'INPUT' && event.target.type === 'text') {
+            const currentInput = event.target;
+            const currentIndex = letterInputs.indexOf(currentInput);
+
+            if (event.key === "Backspace" && currentInput.value.length === 0 && currentIndex !== -1 && currentIndex > 0) {
+                letterInputs[currentIndex - 1].focus();
             }
-            // Submit on Enter from last input
-            if (event.key === 'Enter' && index === letterInputs.length - 1 && !submitButton.disabled) {
+
+            if (event.key === 'Enter' && currentIndex !== -1 && currentIndex === letterInputs.length - 1 && !submitButton.disabled) {
                 handleAnswerSubmitted();
             }
-        });
+        }
     });
 
     [...gameModeRadios, ...progressionStyleRadios].forEach(radio => {

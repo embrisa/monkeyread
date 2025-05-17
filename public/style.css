@@ -284,14 +284,16 @@ li {
     border-radius: 48px 48px 60px 60px/60px 60px 48px 48px;
     box-shadow: 0 10px 36px rgba(80, 60, 20, 0.22), 0 2px 0 #C68642 inset;
     position: relative;
-    padding: 160px;
+    width: 320px;
+    height: 220px;
+    padding: 20px;
     animation: none;
     overflow: hidden;
 }
 
 #flashing-letter {
     font-family: var(--font-heading);
-    font-size: 170px;
+    font-size: 120px;
     font-weight: 900;
     color: #111;
     text-shadow: none;
@@ -556,12 +558,13 @@ li {
     }
 
     #letter-display-area {
-        width: 180px;
-        height: 120px;
+        width: 200px;
+        height: 150px;
+        padding: 10px;
     }
 
     #flashing-letter {
-        font-size: 90px;
+        font-size: 70px;
         border-radius: 18px;
         padding: 0.1em 0.4em;
     }
