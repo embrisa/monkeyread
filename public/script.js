@@ -56,14 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const basePointsPerLetter = 5;       // Base points before speed multiplier
     const orderBonusBasePoints = 10;     // Base bonus points before speed multiplier
 
-    // Add a helper text element for Enter-to-continue
-    let nextRoundHint = document.getElementById('next-round-hint');
-    if (!nextRoundHint) {
-        nextRoundHint = document.createElement('div');
-        nextRoundHint.id = 'next-round-hint';
-        nextRoundHint.style.display = 'none';
-        nextRoundButton.parentNode.insertBefore(nextRoundHint, nextRoundButton.nextSibling);
-    }
+    // Get the next round hint element (now always present in HTML)
+    const nextRoundHint = document.getElementById('next-round-hint');
 
     // --- Utility Functions ---
     function getRandomLetter() {
