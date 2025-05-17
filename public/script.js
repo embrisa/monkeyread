@@ -256,7 +256,25 @@ document.addEventListener('DOMContentLoaded', () => {
         resetUIForNewRound();
         generateLetters();
         currentSpeedDisplay.textContent = actualDisplaySpeed; // Ensure speed is updated for this round
-        manageFlashAndInputCycle();
+        // Add countdown pause before flashing letters
+        let countdownDuration = 2000; // 2 seconds (can adjust as needed)
+        let startTimestamp = null;
+        let lastDisplay = null;
+        function countdownStep(now) {
+            if (!startTimestamp) startTimestamp = now;
+            let elapsed = now - startTimestamp;
+            let remaining = Math.max(0, countdownDuration - elapsed);
+            // Format as seconds.milliseconds (e.g., 1.532)
+            let seconds = (remaining / 1000).toFixed(3);
+            countdownMessageDisplay.textContent = `Get ready: ${seconds}s`;
+            if (remaining > 0) {
+                requestAnimationFrame(countdownStep);
+            } else {
+                countdownMessageDisplay.textContent = '';
+                manageFlashAndInputCycle();
+            }
+        }
+        requestAnimationFrame(countdownStep);
     }
 
     function calculateSpeedDecrease(isPerfect, speed, minSpeed) {
