@@ -276,11 +276,15 @@ li {
 #flashing-letter {
     font-family: var(--font-heading);
     font-size: 90px;
-    font-weight: 700;
+    font-weight: 900;
     color: var(--color-letter-flash-text);
-    text-shadow: 2px 4px 0 #FFFBEA, 0 0 12px #F4A25944;
+    text-shadow: 0 0 6px #fff, 0 0 2px #000, 2px 4px 0 #FFFBEA, 0 0 12px #F4A25944;
+    background: none;
+    border-radius: 18px;
+    padding: 0.1em 0.4em;
+    box-shadow: 0 2px 12px #0002;
     visibility: hidden;
-    transition: color 0.2s, text-shadow 0.2s;
+    transition: none;
 }
 
 /* --- Input Area --- */
