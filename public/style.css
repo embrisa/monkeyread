@@ -110,7 +110,8 @@ li {
 
 /* --- Layout & Container --- */
 .container {
-    background-color: #FFFFFF;
+    background-color: var(--color-bg);
+    /* Beige background for all containers */
     padding: 25px 40px;
     border-radius: var(--border-radius-medium);
     box-shadow: var(--shadow-subtle);
