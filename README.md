@@ -31,9 +31,9 @@ Monkeyread is a fast-paced, focus-driven memory game designed to challenge and i
     - This approach ensures that all visual updates are synchronized with the browser's rendering loop and the user's screen refresh rate, which is critical for perceptual accuracy in a fast-paced memory game like Monkeyread.
 
 **6. Game Logic & Game Loop (Current Implementation):**
-- Monkeyread operates in a single, difficulty-adjustable game mode. At the start of each round, a sequence of N unique letters (N = difficulty, 1–6) is generated and flashed sequentially to the player.
-- **Before each round starts, a 1-second countdown is displayed in the letter display area as milliseconds (e.g., '532'), with no label or prefix.**
-- After the countdown, the sequence is shown. The input area and two buttons become available:
+- Monkeyread operates in a single, difficulty-adjustable game mode. At the start of each round, a sequence of N unique letters (N = difficulty, 1–7) is generated and flashed sequentially to the player.
+- **Before each round starts, there is a 1-second pause.**
+- After the pause, the sequence is shown. The input area and two buttons become available:
     - **Submit Answer**: Enter your guess for the sequence.
     - **Re-flash Letters**: Replay the current sequence (each use reduces the round's score by 20%).
 - The player can submit their answer at any time. After submission, feedback and scoring are shown, and only the **Next Round** button is enabled.
@@ -47,6 +47,8 @@ Monkeyread is a fast-paced, focus-driven memory game designed to challenge and i
 - **Correct glyphs, wrong order:** Good points! Display speed moderately decreases.
 - **Any incorrect glyph / Not all glyphs identified:** No points for the round. Display speed slightly increases (gets slower).
 - **Each re-flash reduces your score for the round by 20%.**
+- **Time per Letter:** The "Speed" or "Letter Time" shown in the scoreboard is the number of milliseconds each letter is displayed during the flashing sequence. The total time to display the full sequence is (Letter Time × Number of Letters). Faster letter times mean a greater challenge and higher potential score.
+- **Accuracy Score:** The "Accuracy" shown in the scoreboard is the percentage of letters you have entered correctly (including partial credit for correct letters in the wrong position) out of all letters attempted during the session. This helps you track your overall precision, not just your score.
 
 **8. User Experience Flow:**
 1. Click "Start Game". A 1-second millisecond countdown appears in the letter display area.

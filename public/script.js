@@ -11,10 +11,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentLevelDisplay = document.getElementById('current-level'); // Now represents "Round"
     const currentScoreDisplay = document.getElementById('current-score');
     const currentSpeedDisplay = document.getElementById('current-speed');
+    const letterTimeDisplay = document.getElementById('letter-time');
     const countdownMessageDisplay = document.getElementById('countdown-message');
     const difficultySlider = document.getElementById('difficulty-slider');
     const difficultyValue = document.getElementById('difficulty-value');
     const reflashButton = document.getElementById('reflash-button');
+    const accuracyRatingDisplay = document.getElementById('accuracy-rating');
 
     // Game State Variables
     let currentLetters = [];
@@ -26,6 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let reflashCount = 0;
     let reflashTimeoutId = null;
     let flashCycleActive = false;
+    // --- Accuracy Tracking ---
+    let totalLettersAttempted = 0;
+    let totalLettersCorrect = 0;
 
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -203,6 +208,15 @@ document.addEventListener('DOMContentLoaded', () => {
         currentLevelDisplay.textContent = currentRound;
         currentScoreDisplay.textContent = score;
         currentSpeedDisplay.textContent = gameActive ? actualDisplaySpeed : "N/A";
+        letterTimeDisplay.textContent = gameActive ? actualDisplaySpeed : "N/A";
+        // Update accuracy rating
+        if (totalLettersAttempted === 0) {
+            accuracyRatingDisplay.textContent = '100%';
+        } else {
+            // Show to one decimal if not integer
+            let percent = (totalLettersCorrect / totalLettersAttempted) * 100;
+            accuracyRatingDisplay.textContent = (percent % 1 === 0 ? Math.round(percent) : percent.toFixed(1)) + '%';
+        }
     }
 
     function resetUIForNewRound() {
@@ -228,6 +242,9 @@ document.addEventListener('DOMContentLoaded', () => {
         currentRound = 1;
         score = 0;
         actualDisplaySpeed = initialDisplaySpeed; // Reset speed to initial
+        // Reset accuracy stats
+        totalLettersAttempted = 0;
+        totalLettersCorrect = 0;
         updateDisplays();
         startButton.textContent = "Restart Game";
         proceedToNextRoundSetup();
@@ -244,18 +261,17 @@ document.addEventListener('DOMContentLoaded', () => {
         resetUIForNewRound();
         generateLetters();
         currentSpeedDisplay.textContent = actualDisplaySpeed; // Ensure speed is updated for this round
-        // Add countdown pause before flashing letters
+        // Add invisible 1 second pause before flashing letters
         let countdownDuration = 1000; // 1 second
         let startTimestamp = null;
-        flashingLetterDisplay.style.visibility = 'visible';
-        flashingLetterDisplay.style.color = '#111';
+        // Hide the flashing letter display during the pause
+        flashingLetterDisplay.textContent = '';
+        flashingLetterDisplay.style.visibility = 'hidden';
         function countdownStep(now) {
             if (!startTimestamp) startTimestamp = now;
             let elapsed = now - startTimestamp;
             let remaining = Math.max(0, countdownDuration - elapsed);
-            // Display only milliseconds (e.g., 532)
-            let ms = Math.floor(remaining).toString().padStart(3, '0');
-            flashingLetterDisplay.textContent = ms;
+            // No visual update during pause
             if (remaining > 0) {
                 requestAnimationFrame(countdownStep);
             } else {
@@ -311,6 +327,32 @@ document.addEventListener('DOMContentLoaded', () => {
         submitButton.disabled = true;
         inputArea.classList.add('hidden');
 
+        // --- Accuracy Calculation ---
+        totalLettersAttempted += userGuess.length;
+        let correctThisRound = 0;
+        // Award 1 point for each letter in the correct position, 0.5 for correct letter in wrong position, 0 for incorrect
+        let usedIndices = new Set();
+        for (let i = 0; i < userGuess.length; i++) {
+            if (userGuess[i] === currentLetters[i]) {
+                correctThisRound += 1;
+                usedIndices.add(i);
+            }
+        }
+        // For remaining user guesses, if correct letter but wrong position (and not already matched)
+        for (let i = 0; i < userGuess.length; i++) {
+            if (userGuess[i] !== currentLetters[i] && currentLetters.includes(userGuess[i])) {
+                // Only count if this letter hasn't already been matched in the correct position
+                for (let j = 0; j < currentLetters.length; j++) {
+                    if (!usedIndices.has(j) && currentLetters[j] === userGuess[i]) {
+                        correctThisRound += 0.5;
+                        usedIndices.add(j);
+                        break;
+                    }
+                }
+            }
+        }
+        totalLettersCorrect += correctThisRound;
+
         let roundScore = 0;
         let feedbackMessage = "";
         let speedChangeMessage = "";
@@ -340,7 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 feedbackMessage = `Not quite all letters identified. No points.`;
             }
-            feedbackMessage += ` Glyphs were: ${currentLetters.join(', ')}.`;
+            feedbackMessage += ` Letters were: ${currentLetters.join(', ')}.`;
             messageDisplay.className = "incorrect";
         } else {
             // All letters identified are correct and all target letters were identified. Now check order.
@@ -358,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 speedChangeMessage = "Speed increased significantly!";
                 messageDisplay.className = "bonus";
             } else {
-                feedbackMessage = `All glyphs correct, but wrong order.`;
+                feedbackMessage = `All letters correct, but wrong order.`;
                 const decrease = calculateSpeedDecrease(false, actualDisplaySpeed, minPracticalDisplaySpeed);
                 actualDisplaySpeed = Math.max(minPracticalDisplaySpeed, actualDisplaySpeed - decrease);
                 speedChangeMessage = "Speed increased.";
@@ -366,7 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             // Apply re-flash penalty
             roundScore = Math.round(roundScore * reflashMultiplier);
-            feedbackMessage += ` +${roundScore} points${reflashPenaltyMessage}. Glyphs: ${currentLetters.join(', ')}.`;
+            feedbackMessage += ` +${roundScore} points${reflashPenaltyMessage}. Letters: ${currentLetters.join(', ')}.`;
         }
 
         messageDisplay.textContent = feedbackMessage + " " + speedChangeMessage;
@@ -385,6 +427,18 @@ document.addEventListener('DOMContentLoaded', () => {
         numberOfLettersToDisplay = parseInt(difficultySlider.value, 10);
         difficultyValue.textContent = numberOfLettersToDisplay;
         createLetterInputs(numberOfLettersToDisplay);
+        // Set thumb color based on value (7-step gradient)
+        const thumbColors = [
+            '#16C172', // 1 - green
+            '#6CD86C', // 2 - lighter green
+            '#C6E84E', // 3 - yellow-green
+            '#FFE156', // 4 - yellow
+            '#FFC300', // 5 - orange-yellow
+            '#FF6E1A', // 6 - orange
+            '#FF2D2D'  // 7 - red
+        ];
+        const idx = Math.max(1, Math.min(7, numberOfLettersToDisplay)) - 1;
+        document.documentElement.style.setProperty('--difficulty-thumb-color', thumbColors[idx]);
     }
 
     // --- Event Listeners ---

@@ -40,6 +40,8 @@
     --shadow-interactive: 0 2px 8px rgba(93, 83, 74, 0.18);
     --wood-gradient: linear-gradient(135deg, #E2B07A 0%, #C68642 100%);
     --leaf-gradient: linear-gradient(135deg, #A8E063 0%, #56AB2F 100%);
+    --difficulty-thumb-color: #16C172;
+    /* Default to green */
 }
 
 /* --- Base & Typography --- */
@@ -479,6 +481,11 @@ li {
     margin-right: 0.1em;
 }
 
+#score-area span#accuracy-rating::before {
+    content: '🎯';
+    margin-right: 0.1em;
+}
+
 /* --- Instructions --- */
 #instructions {
     margin-top: 30px;
@@ -712,7 +719,7 @@ li {
     margin-top: -2px;
     /* Center thumb on larger track */
     border-radius: 50%;
-    background: var(--color-primary-accent);
+    background: var(--difficulty-thumb-color);
     border: 3px solid #fff;
     box-shadow: 0 4px 12px #7AC74F55;
     cursor: pointer;
@@ -720,7 +727,7 @@ li {
 }
 
 #difficulty-slider:active::-webkit-slider-thumb {
-    background: #5DA23A;
+    background: var(--difficulty-thumb-color);
     transform: scale(1.08);
 }
 
@@ -734,7 +741,7 @@ li {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: var(--color-primary-accent);
+    background: var(--difficulty-thumb-color);
     border: 3px solid #fff;
     box-shadow: 0 4px 12px #7AC74F55;
     cursor: pointer;
@@ -742,7 +749,7 @@ li {
 }
 
 #difficulty-slider:active::-moz-range-thumb {
-    background: #5DA23A;
+    background: var(--difficulty-thumb-color);
     transform: scale(1.08);
 }
 
@@ -756,7 +763,7 @@ li {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: var(--color-primary-accent);
+    background: var(--difficulty-thumb-color);
     border: 3px solid #fff;
     box-shadow: 0 4px 12px #7AC74F55;
     cursor: pointer;
@@ -764,7 +771,7 @@ li {
 }
 
 #difficulty-slider:active::-ms-thumb {
-    background: #5DA23A;
+    background: var(--difficulty-thumb-color);
     transform: scale(1.08);
 }
 
@@ -799,7 +806,7 @@ li {
     display: flex;
     align-items: center;
     gap: 18px;
-    margin: 10px 0 0 0;
+    margin: -16px 0 0 0;
     justify-content: center;
 }
 
@@ -809,6 +816,13 @@ li {
     font-size: 1.15em;
     line-height: 1;
     margin: 0;
-    padding-bottom: 2px;
-    /* Fine-tune vertical alignment */
+    padding-top: 16px;
+}
+
+#score-info-note {
+    font-size: 0.95em;
+    color: #888;
+    margin-top: -10px;
+    margin-bottom: 10px;
+    text-align: center;
 }

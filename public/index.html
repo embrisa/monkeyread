@@ -52,7 +52,7 @@
         </div>
 
         <div id="input-area" class="hidden">
-            <p class="input-instruction">Enter the glyphs in the order seen.</p>
+            <p class="input-instruction">Enter the letters in the order seen.</p>
             <div class="letter-inputs-wrapper" id="letter-inputs-wrapper">
                 <!-- Inputs will be dynamically generated here -->
             </div>
@@ -66,27 +66,36 @@
         <div id="score-area">
             <p>Round: <span id="current-level" aria-live="polite">1</span></p>
             <p>Score: <span id="current-score" aria-live="polite">0</span></p>
+            <p>Accuracy: <span id="accuracy-rating" aria-live="polite">100%</span></p>
             <p>Speed: <span id="current-speed" aria-live="polite">N/A</span> ms</p>
+            <p>Letter Time: <span id="letter-time" aria-live="polite">N/A</span> ms</p>
+        </div>
+        <div id="score-info-note">
+            <span
+                title="Speed is the time each letter is shown. Letter Time is the same value. The total sequence time is Speed × Number of Letters.">
+                <strong>Speed</strong> = time each letter is shown. <strong>Letter Time</strong> = same value.
+                <strong>Total sequence time</strong> = Speed × Number of Letters.
+            </span>
         </div>
 
         <div id="instructions">
             <h2>How to Play Monkeyread</h2>
             <ol>
                 <li>Select your Difficulty.</li>
-                <li>Click "Start Game". Glyphs (letters) will flash in bold black on a white background. Pay attention
+                <li>Click "Start Game". Letters will flash in bold black on a white background. Pay attention
                     to their order!</li>
-                <li>Enter the glyphs you saw into the input boxes in the correct order. All letters and inputs are
+                <li>Enter the letters you saw into the input boxes in the correct order. All letters and inputs are
                     high-contrast for easy reading.</li>
                 <li><strong>Re-flash:</strong> If you need to see the sequence again, click the <strong>Re-flash
                         Letters</strong> button. Each re-flash reduces your potential score for the round by 20%.</li>
                 <li><strong>Scoring & Speed:</strong>
                     <ul>
                         <li>Points are awarded based on the current display speed (faster speed = more points).</li>
-                        <li><strong>Perfect (All glyphs correct & in order):</strong> Max points for the round! Display
+                        <li><strong>Perfect (All letters correct & in order):</strong> Max points for the round! Display
                             speed for the next round significantly decreases (gets faster).</li>
-                        <li><strong>Correct glyphs, wrong order:</strong> Good points! Display speed moderately
+                        <li><strong>Correct letters, wrong order:</strong> Good points! Display speed moderately
                             decreases.</li>
-                        <li><strong>Any incorrect glyph / Not all glyphs identified:</strong> No points for the round.
+                        <li><strong>Any incorrect letter / Not all letters identified:</strong> No points for the round.
                             Display speed slightly increases (gets slower).</li>
                         <li>Each re-flash reduces your score for the round by 20%.</li>
                     </ul>
