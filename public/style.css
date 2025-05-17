@@ -446,10 +446,14 @@ li {
     color: var(--color-text-light);
     border: 2px solid var(--color-secondary-accent);
     box-shadow: 0 2px 8px #FFE15633;
-    display: flex;
-    justify-content: space-around;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    justify-items: center;
     align-items: center;
-    gap: 18px;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: anywhere;
 }
 
 #score-area p {
@@ -458,6 +462,9 @@ li {
     display: flex;
     align-items: center;
     gap: 0.4em;
+    justify-content: center;
+    min-width: 0;
+    word-break: break-word;
 }
 
 #score-area span {
@@ -593,6 +600,17 @@ li {
 
     #instructions {
         padding: 15px 5px;
+    }
+
+    #score-area {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        padding: 10px 4px;
+        gap: 8px;
+    }
+
+    #score-area p {
+        font-size: 0.98em;
+        padding: 0 2px;
     }
 }
 
