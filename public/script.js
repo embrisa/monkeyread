@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         phase = 'show';
                         lastTimestamp = now;
                         flashingLetterDisplay.textContent = currentLetters[letterIndex];
-                        flashingLetterDisplay.style.color = '#000';
+                        flashingLetterDisplay.style.color = '#111';
                         flashingLetterDisplay.style.visibility = 'visible';
                     }
                 } else if (phase === 'show') {
@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (letterIndex < currentLetters.length) {
                             phase = 'show';
                             flashingLetterDisplay.textContent = currentLetters[letterIndex];
-                            flashingLetterDisplay.style.color = '#000';
+                            flashingLetterDisplay.style.color = '#111';
                             flashingLetterDisplay.style.visibility = 'visible';
                             lastTimestamp = now;
                         } else {
@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let countdownDuration = 1000; // 1 second
         let startTimestamp = null;
         flashingLetterDisplay.style.visibility = 'visible';
-        flashingLetterDisplay.style.color = '#000';
+        flashingLetterDisplay.style.color = '#111';
         function countdownStep(now) {
             if (!startTimestamp) startTimestamp = now;
             let elapsed = now - startTimestamp;
