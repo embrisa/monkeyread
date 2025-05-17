@@ -114,6 +114,7 @@ li {
     /* Beige background for all containers */
     padding: 25px 40px;
     border-radius: var(--border-radius-medium);
+    border: 2px solid var(--color-secondary-accent);
     box-shadow: var(--shadow-subtle);
     text-align: center;
     width: 100%;
@@ -592,7 +593,6 @@ li {
 .how-fast-section {
     margin-top: 32px;
     background: #fffbead9;
-    border: 2px solid var(--color-secondary-accent);
     box-shadow: 0 2px 8px #FFE15633;
     border-radius: 24px;
     padding: 32px 24px;
@@ -684,16 +684,19 @@ li {
     margin: 18px 0 8px 0;
     -webkit-appearance: none;
     appearance: none;
-    height: 12px;
-    background: var(--color-secondary-accent);
-    border-radius: 8px;
+    height: 28px;
+    /* Larger track */
+    background: linear-gradient(90deg, #16C172 0%, #FFE156 50%, #FF2D2D 100%);
+    border-radius: 16px;
     box-shadow: 0 2px 8px #FFE15655;
     outline: none;
     transition: background 0.3s;
+    position: relative;
+    display: block;
 }
 
 #difficulty-slider:hover {
-    background: linear-gradient(90deg, var(--color-secondary-accent) 60%, var(--color-primary-accent) 100%);
+    background: linear-gradient(90deg, #16C172 0%, #FFE156 50%, #FF2D2D 100%);
 }
 
 #difficulty-slider:focus {
@@ -705,6 +708,8 @@ li {
     appearance: none;
     width: 32px;
     height: 32px;
+    margin-top: -2px;
+    /* Center thumb on larger track */
     border-radius: 50%;
     background: var(--color-primary-accent);
     border: 3px solid #fff;
@@ -716,6 +721,12 @@ li {
 #difficulty-slider:active::-webkit-slider-thumb {
     background: #5DA23A;
     transform: scale(1.08);
+}
+
+#difficulty-slider::-webkit-slider-runnable-track {
+    height: 28px;
+    border-radius: 16px;
+    background: transparent;
 }
 
 #difficulty-slider::-moz-range-thumb {
@@ -734,6 +745,12 @@ li {
     transform: scale(1.08);
 }
 
+#difficulty-slider::-moz-range-track {
+    height: 28px;
+    border-radius: 16px;
+    background: linear-gradient(90deg, #16C172 0%, #FFE156 50%, #FF2D2D 100%);
+}
+
 #difficulty-slider::-ms-thumb {
     width: 32px;
     height: 32px;
@@ -750,46 +767,22 @@ li {
     transform: scale(1.08);
 }
 
-#difficulty-slider::-webkit-slider-thumb {
-    box-shadow: 0 4px 12px #7AC74F55;
-}
-
 #difficulty-slider::-ms-fill-lower {
-    background: var(--color-secondary-accent);
-    border-radius: 8px;
+    background: linear-gradient(90deg, #16C172 0%, #FFE156 50%, #FF2D2D 100%);
+    border-radius: 16px;
 }
 
 #difficulty-slider::-ms-fill-upper {
-    background: var(--color-primary-accent);
-    border-radius: 8px;
+    background: linear-gradient(90deg, #16C172 0%, #FFE156 50%, #FF2D2D 100%);
+    border-radius: 16px;
 }
 
 #difficulty-slider:focus::-ms-fill-lower {
-    background: var(--color-secondary-accent);
+    background: linear-gradient(90deg, #16C172 0%, #FFE156 50%, #FF2D2D 100%);
 }
 
 #difficulty-slider:focus::-ms-fill-upper {
-    background: var(--color-primary-accent);
-}
-
-#difficulty-slider::-webkit-slider-runnable-track {
-    height: 12px;
-    border-radius: 8px;
-}
-
-#difficulty-slider::-moz-range-track {
-    height: 12px;
-    border-radius: 8px;
-    background: var(--color-secondary-accent);
-}
-
-#difficulty-slider::-ms-fill-lower,
-#difficulty-slider::-ms-fill-upper {
-    height: 12px;
-}
-
-#difficulty-slider:focus {
-    outline: none;
+    background: linear-gradient(90deg, #16C172 0%, #FFE156 50%, #FF2D2D 100%);
 }
 
 #difficulty-value {
