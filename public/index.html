@@ -24,10 +24,7 @@
             <fieldset id="progression-style-selection">
                 <legend>Progression Style</legend>
                 <label>
-                    <input type="radio" name="progressionStyle" value="auto" checked> Automatic (3s timer)
-                </label>
-                <label>
-                    <input type="radio" name="progressionStyle" value="manual"> Manual Next Round
+                    <input type="radio" name="progressionStyle" value="manual" checked> Manual Next Round
                 </label>
             </fieldset>
             <fieldset id="difficulty-selection">
@@ -47,6 +44,7 @@
         <div id="controls-area">
             <button id="start-button" class="button button-primary">Start Game</button>
             <button id="next-round-button" class="button button-secondary hidden">Next Round</button>
+            <button id="reflash-button" class="button button-secondary hidden">Re-flash Letters</button>
         </div>
 
         <div id="letter-display-area" aria-live="polite" aria-atomic="true">
@@ -83,9 +81,12 @@
                     to their order!</li>
                 <li>Enter the glyphs you saw into the input boxes in the correct order. All letters and inputs are
                     high-contrast for easy reading.</li>
+                <li>If you need to see the letters again, click "Re-flash Letters". Note that each re-flash will reduce
+                    your potential score for that round.</li>
                 <li><strong>Scoring & Speed:</strong>
                     <ul>
-                        <li>Points are awarded based on the current display speed (faster speed = more points).</li>
+                        <li>Points are awarded based on the current display speed (faster speed = more points) and
+                            reduced by re-flashes.</li>
                         <li><strong>Perfect (All glyphs correct & in order):</strong> Max points for the round! Display
                             speed for the next round significantly decreases (gets faster).</li>
                         <li><strong>Correct glyphs, wrong order:</strong> Good points! Display speed moderately
@@ -94,7 +95,7 @@
                             Display speed slightly increases (gets slower).</li>
                     </ul>
                 </li>
-                <li><strong>Progression:</strong> Based on your "Progression Style" selection.</li>
+                <li><strong>Progression:</strong> After submitting your answer, click "Next Round" to continue.</li>
                 <li>The game continues, adapting the speed to your performance. Aim for precision and speed!</li>
             </ol>
         </div>

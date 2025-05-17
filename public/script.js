@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const flashingLetterDisplay = document.getElementById('flashing-letter');
     const startButton = document.getElementById('start-button');
     const nextRoundButton = document.getElementById('next-round-button');
+    const reflashButton = document.getElementById('reflash-button');
     const submitButton = document.getElementById('submit-button');
     const inputArea = document.getElementById('input-area');
     const letterInputsWrapper = document.getElementById('letter-inputs-wrapper');
@@ -84,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function toggleOptionsInputs(enable) {
         gameModeRadios.forEach(radio => radio.disabled = !enable);
         progressionStyleRadios.forEach(radio => radio.disabled = !enable);
+        difficultySelector.disabled = !enable;
     }
 
     function createLetterInputs(num) {
@@ -225,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
         countdownMessageDisplay.textContent = "";
         inputArea.classList.add('hidden');
         nextRoundButton.classList.add('hidden');
+        reflashButton.classList.add('hidden');
         submitButton.disabled = true;
         flashingLetterDisplay.textContent = "";
         flashingLetterDisplay.style.visibility = 'hidden';
@@ -236,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function startGame() {
         gameActive = true;
         updateSelectedOptions();
-        resetUIForNewRound(); // Use the round reset
+        resetUIForNewRound();
         toggleOptionsInputs(false);
 
         currentRound = 1;
@@ -244,13 +247,14 @@ document.addEventListener('DOMContentLoaded', () => {
         actualDisplaySpeed = initialDisplaySpeed; // Reset speed to initial
         updateDisplays();
         startButton.textContent = "Restart Game";
+        reflashButton.classList.add('hidden');
+        nextRoundButton.classList.add('hidden');
 
         proceedToNextRoundSetup();
     }
 
-    function advanceToNextRound() { // Renamed from advanceLevel
+    function advanceToNextRound() {
         currentRound++;
-        // actualDisplaySpeed is adjusted in handleAnswerSubmitted, not here directly by level
         updateDisplays(); // Update round number
         proceedToNextRoundSetup();
     }
@@ -258,7 +262,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function proceedToNextRoundSetup() {
         resetUIForNewRound();
         generateLetters();
-        currentSpeedDisplay.textContent = actualDisplaySpeed; // Ensure speed is updated for this round
+        createLetterInputs(numberOfLettersToDisplay);
+        currentSpeedDisplay.textContent = actualDisplaySpeed;
         manageFlashAndInputCycle();
     }
 
@@ -399,7 +404,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateDifficulty() {
         numberOfLettersToDisplay = parseInt(difficultySelector.value, 10);
-        createLetterInputs(numberOfLettersToDisplay);
+        if (!gameActive) {
+            createLetterInputs(numberOfLettersToDisplay);
+        }
     }
 
     // --- Event Listeners ---
@@ -419,6 +426,8 @@ document.addEventListener('DOMContentLoaded', () => {
             advanceToNextRound();
         }
     });
+
+    reflashButton.addEventListener('click', handleReflashRequest);
 
     submitButton.addEventListener('click', handleAnswerSubmitted);
 
@@ -473,4 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDisplays();
     toggleOptionsInputs(true);
     resetUIForNewRound();
+    startButton.textContent = "Start Game";
+    startButton.classList.add('button-primary');
+    startButton.classList.remove('button-secondary');
 });

@@ -273,6 +273,12 @@ li {
     color: #fff;
 }
 
+/* Style for the new reflash button, can be same as secondary */
+#reflash-button {
+    /* Uses .button and .button-secondary classes, specific overrides can go here if needed */
+    /* Example: might want slightly different margin if placed differently */
+}
+
 /* --- Letter Display --- */
 #letter-display-area {
     background: #fff;
