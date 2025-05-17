@@ -47,12 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
         '#16C172', // Darker Green (2nd)
         '#2D9CFF'  // Vivid Blue (3rd)
     ];
-    // Faded background colors (RGBA with higher opacity)
-    const flashingLetterBgColors = [
-        'rgba(255, 45, 45, 0.72)',   // Vivid Red bg
-        'rgba(22, 193, 114, 0.72)',  // Darker Green bg
-        'rgba(45, 156, 255, 0.72)'   // Vivid Blue bg
-    ];
 
     const defaultSpeedChangeOnCorrect = 25; // ms, base speed decrease for correct letters (wrong order)
     const perfectRoundSpeedBoost = 20;    // ms, additional speed decrease for perfect round
@@ -111,9 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     phase = 'show';
                     lastTimestamp = now;
                     flashingLetterDisplay.textContent = currentLetters[letterIndex];
-                    // Set color and background based on position BEFORE showing
                     flashingLetterDisplay.style.color = flashingLetterColors[letterIndex];
-                    flashingLetterDisplay.style.background = flashingLetterBgColors[letterIndex];
                     flashingLetterDisplay.style.visibility = 'visible';
                 }
             } else if (phase === 'show') {
@@ -128,9 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (letterIndex < 3) {
                         phase = 'show';
                         flashingLetterDisplay.textContent = currentLetters[letterIndex];
-                        // Set color and background based on position BEFORE showing
                         flashingLetterDisplay.style.color = flashingLetterColors[letterIndex];
-                        flashingLetterDisplay.style.background = flashingLetterBgColors[letterIndex];
                         flashingLetterDisplay.style.visibility = 'visible';
                         lastTimestamp = now;
                     } else {
@@ -166,18 +156,14 @@ document.addEventListener('DOMContentLoaded', () => {
             let elapsed = now - lastTimestamp;
             if (elapsed >= actualDisplaySpeed) {
                 flashingLetterDisplay.textContent = currentLetters[loopCounter % 3];
-                // Set color and background based on position BEFORE showing
                 flashingLetterDisplay.style.color = flashingLetterColors[loopCounter % 3];
-                flashingLetterDisplay.style.background = flashingLetterBgColors[loopCounter % 3];
                 loopCounter++;
                 lastTimestamp = now;
             }
             requestAnimationFrame(loopStep);
         }
         flashingLetterDisplay.textContent = currentLetters[loopCounter % 3];
-        // Set color and background based on position BEFORE showing
         flashingLetterDisplay.style.color = flashingLetterColors[loopCounter % 3];
-        flashingLetterDisplay.style.background = flashingLetterBgColors[loopCounter % 3];
         loopCounter++;
         requestAnimationFrame(loopStep);
 

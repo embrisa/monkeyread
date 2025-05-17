@@ -260,19 +260,10 @@ li {
     border-radius: 48px 48px 60px 60px/60px 60px 48px 48px;
     box-shadow: 0 10px 36px rgba(80, 60, 20, 0.22), 0 2px 0 #C68642 inset;
     position: relative;
-    animation: swing 1.2s cubic-bezier(.36, .07, .19, .97) infinite alternate;
+    padding: 32px 0;
+    animation: none;
     overflow: hidden;
     /* Ensure nothing escapes the container */
-}
-
-@keyframes swing {
-    0% {
-        transform: rotate(-2deg);
-    }
-
-    100% {
-        transform: rotate(2deg);
-    }
 }
 
 #flashing-letter {
