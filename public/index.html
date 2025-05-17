@@ -21,15 +21,6 @@
         </header>
 
         <div id="game-options">
-            <fieldset id="game-mode-selection">
-                <legend>Game Mode</legend>
-                <label>
-                    <input type="radio" name="gameMode" value="classic" checked> Classic Sequential
-                </label>
-                <label>
-                    <input type="radio" name="gameMode" value="looping"> Looping Letters
-                </label>
-            </fieldset>
             <fieldset id="progression-style-selection">
                 <legend>Progression Style</legend>
                 <label>
@@ -38,6 +29,18 @@
                 <label>
                     <input type="radio" name="progressionStyle" value="manual"> Manual Next Round
                 </label>
+            </fieldset>
+            <fieldset id="difficulty-selection">
+                <legend>Difficulty (Number of Letters)</legend>
+                <label for="difficulty-selector">Letters:</label>
+                <select id="difficulty-selector">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                </select>
             </fieldset>
         </div>
 
@@ -55,18 +58,9 @@
         </div>
 
         <div id="input-area" class="hidden">
-            <p class="input-instruction">Enter the glyphs in the order seen. Input boxes are color-coded:
-                <span class="color-hint pos1">Red (1st)</span>,
-                <span class="color-hint pos2">Green (2nd)</span>,
-                <span class="color-hint pos3">Blue (3rd)</span>.
-            </p>
-            <div class="letter-inputs-wrapper">
-                <input type="text" id="letter1" class="input-pos-1" maxlength="1" placeholder="1st"
-                    aria-label="First letter (Red slot)">
-                <input type="text" id="letter2" class="input-pos-2" maxlength="1" placeholder="2nd"
-                    aria-label="Second letter (Green slot)">
-                <input type="text" id="letter3" class="input-pos-3" maxlength="1" placeholder="3rd"
-                    aria-label="Third letter (Blue slot)">
+            <p class="input-instruction">Enter the glyphs in the order seen.</p>
+            <div class="letter-inputs-wrapper" id="letter-inputs-wrapper">
+                <!-- Inputs will be dynamically generated here -->
             </div>
             <button id="submit-button" class="button button-submit">Submit Answer</button>
         </div>
@@ -84,25 +78,20 @@
         <div id="instructions">
             <h2>How to Play Monkeyread</h2>
             <ol>
-                <li>Select your Game Mode and Progression Style.</li>
-                <li>Click "Start Game". Glyphs (letters) will flash. Pay attention to their order!</li>
-                <li>The input boxes are color-coded for order:
-                    <span class="color-hint pos1">Red (1st)</span>,
-                    <span class="color-hint pos2">Green (2nd)</span>,
-                    <span class="color-hint pos3">Blue (3rd)</span>.
-                    Enter the glyphs you saw into the corresponding colored slots.
-                </li>
+                <li>Select your Progression Style and Difficulty.</li>
+                <li>Click "Start Game". Glyphs (letters) will flash in bold black on a white background. Pay attention
+                    to their order!</li>
+                <li>Enter the glyphs you saw into the input boxes in the correct order. All letters and inputs are
+                    high-contrast for easy reading.</li>
                 <li><strong>Scoring & Speed:</strong>
                     <ul>
                         <li>Points are awarded based on the current display speed (faster speed = more points).</li>
                         <li><strong>Perfect (All glyphs correct & in order):</strong> Max points for the round! Display
-                            speed for the
-                            next round significantly decreases (gets faster).</li>
+                            speed for the next round significantly decreases (gets faster).</li>
                         <li><strong>Correct glyphs, wrong order:</strong> Good points! Display speed moderately
                             decreases.</li>
                         <li><strong>Any incorrect glyph / Not all glyphs identified:</strong> No points for the round.
-                            Display speed
-                            slightly increases (gets slower).</li>
+                            Display speed slightly increases (gets slower).</li>
                     </ul>
                 </li>
                 <li><strong>Progression:</strong> Based on your "Progression Style" selection.</li>
@@ -111,10 +100,8 @@
         </div>
     </div>
 
-    <section id="how-fast-can-we-see" class="container"
-        style="margin-top: 32px; background: #fffbead9; border: 2px solid #FFE156; box-shadow: 0 2px 8px #FFE15633; border-radius: 24px; padding: 32px 24px;">
-        <h2 style="color: #7AC74F; text-align: center; margin-bottom: 0.5em;">How Fast Can We See? The 13 Millisecond
-            Snapshot</h2>
+    <section id="how-fast-can-we-see" class="container how-fast-section">
+        <h2 class="how-fast-title">How Fast Can We See? The 13 Millisecond Snapshot</h2>
         <p>Researchers at MIT discovered that the human brain can identify whole images that our eyes see for as little
             as 13 milliseconds. To put that in perspective, a blink of an eye takes about 300 to 400 milliseconds. So,
             we're talking about seeing and understanding an image in a tiny fraction of a blink. This is much faster
@@ -125,7 +112,7 @@
             milliseconds, part of your brain keeps working on it for a bit longer, allowing you to understand what you
             saw. This rapid understanding is crucial for how we navigate the world, helping our brain decide where to
             look next as our eyes dart around about three times per second.</p>
-        <h3 style="color: #F4A259; margin-top: 1.2em;">It's Not Instant – Seeing Happens in Stages</h3>
+        <h3 class="how-fast-subhead">It's Not Instant – Seeing Happens in Stages</h3>
         <p>Seeing isn't like flipping a light switch; it's more like a rapid assembly line.</p>
         <ul>
             <li><strong>Light Hits the Eye:</strong> Light enters your eye, and cells in your retina (called
@@ -141,7 +128,7 @@
                 with them (the "where/how" pathway). Identifying a specific letter or object might involve these higher
                 areas and could take around 150-200 milliseconds or more for conscious recognition.</li>
         </ul>
-        <h3 style="color: #F4A259; margin-top: 1.2em;">What Affects How Fast We See?</h3>
+        <h3 class="how-fast-subhead">What Affects How Fast We See?</h3>
         <p>Several things can change how quickly we perceive something:</p>
         <ul>
             <li><strong>Where You're Looking (Foveal vs. Peripheral Vision):</strong> You see things sharpest and
@@ -153,19 +140,19 @@
             <li><strong>Complexity and Clutter:</strong> A simple shape is easier and faster to see than a complex one,
                 and a single item is easier to spot than something in a cluttered scene.</li>
         </ul>
-        <h3 style="color: #F4A259; margin-top: 1.2em;">Like a "Refresh Rate": Flicker Fusion</h3>
+        <h3 class="how-fast-subhead">Like a "Refresh Rate": Flicker Fusion</h3>
         <p>Our visual system has a sort of "refresh rate," known as the Flicker Fusion Frequency (FFF). If a light
             flashes on and off slowly, you see it flicker. But if it flashes fast enough (for cone vision, which we use
             in bright light, this is often around 60 times per second or 60 Hz), it looks like a steady, continuous
             light. This tells us about the temporal resolution of our vision – how quickly we can distinguish separate
             moments in time.</p>
-        <h3 style="color: #F4A259; margin-top: 1.2em;">Rapid Eye Movements and Seeing a Stable World</h3>
+        <h3 class="how-fast-subhead">Rapid Eye Movements and Seeing a Stable World</h3>
         <p>Our eyes are almost constantly moving in quick jumps called saccades, about 2-3 times every second. During
             these incredibly fast movements (which can last around 50 milliseconds), our vision is actually suppressed
             for a brief period (over 100 milliseconds) to prevent us from seeing a blurry smear. Our brain then cleverly
             stitches together the information from before and after the saccade to give us a stable, continuous view of
             the world. This involves a "soft handoff" of visual information and relies on our visual working memory.</p>
-        <h3 style="color: #F4A259; margin-top: 1.2em;">In a Nutshell:</h3>
+        <h3 class="how-fast-subhead">In a Nutshell:</h3>
         <p>Humans can perceive and identify images flashed for an incredibly short time – as little as 13 milliseconds.
             However, the whole process from light hitting your eye to you consciously recognizing what you saw involves
             several stages and takes a bit longer, typically a few hundred milliseconds. Things like where you're

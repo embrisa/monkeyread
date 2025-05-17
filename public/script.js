@@ -5,11 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextRoundButton = document.getElementById('next-round-button');
     const submitButton = document.getElementById('submit-button');
     const inputArea = document.getElementById('input-area');
-    const letterInputs = [
-        document.getElementById('letter1'),
-        document.getElementById('letter2'),
-        document.getElementById('letter3')
-    ];
+    const letterInputsWrapper = document.getElementById('letter-inputs-wrapper');
+    let letterInputs = [];
     const messageDisplay = document.getElementById('message');
     const currentLevelDisplay = document.getElementById('current-level'); // Now represents "Round"
     const currentScoreDisplay = document.getElementById('current-score');
@@ -17,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const countdownMessageDisplay = document.getElementById('countdown-message');
     const gameModeRadios = document.querySelectorAll('input[name="gameMode"]');
     const progressionStyleRadios = document.querySelectorAll('input[name="progressionStyle"]');
+    const difficultySelector = document.getElementById('difficulty-selector');
 
     // Game State Variables
     let currentLetters = [];
@@ -24,8 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let score = 0;
     let gameActive = false;
     let lettersDisplayed = false;
-    let selectedGameMode = "classic";
     let selectedProgressionStyle = "auto";
+    let numberOfLettersToDisplay = 3;
+    let reflashCount = 0;
+    let reflashTimeoutId = null;
+    let flashCycleActive = false;
 
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -61,9 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return alphabet[Math.floor(Math.random() * alphabet.length)];
     }
 
-    function generateLetters() {
+    function generateLetters(numLetters = numberOfLettersToDisplay) {
         currentLetters = [];
-        while (currentLetters.length < 3) {
+        while (currentLetters.length < numLetters) {
             const letter = getRandomLetter();
             if (!currentLetters.includes(letter)) {
                 currentLetters.push(letter);
@@ -85,96 +86,132 @@ document.addEventListener('DOMContentLoaded', () => {
         progressionStyleRadios.forEach(radio => radio.disabled = !enable);
     }
 
+    function createLetterInputs(num) {
+        letterInputsWrapper.innerHTML = '';
+        letterInputs = [];
+        for (let i = 0; i < num; i++) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.maxLength = 1;
+            input.id = `letter${i + 1}`;
+            input.className = `input-pos-${(i + 1)}`;
+            input.placeholder = `${i + 1}${getOrdinalSuffix(i + 1)}`;
+            input.setAttribute('aria-label', `Letter ${i + 1}`);
+            letterInputsWrapper.appendChild(input);
+            letterInputs.push(input);
+        }
+    }
+
+    function getOrdinalSuffix(n) {
+        if (n === 1) return 'st';
+        if (n === 2) return 'nd';
+        if (n === 3) return 'rd';
+        return 'th';
+    }
+
     // --- Display Logic ---
-    function displayLettersSequential() {
-        lettersDisplayed = false;
+    function manageFlashAndInputCycle() {
+        // Core loop: flash N letters, 3s pause, repeat until input
+        flashCycleActive = true;
+        reflashCount = 0;
+        inputArea.classList.add('hidden');
+        submitButton.disabled = true;
+        flashingLetterDisplay.textContent = '';
         flashingLetterDisplay.style.visibility = 'hidden';
-        let phase = 'pauseBefore'; // 'pauseBefore', 'show', 'hide', 'done'
-        let letterIndex = 0;
-        let lastTimestamp = null;
-        let pauseBeforeMs = 300;
-        let pauseBetweenMs = Math.max(10, actualDisplaySpeed / 3);
-        let isPaused = false;
+        letterInputs.forEach(input => input.value = '');
 
-        function step(now) {
-            if (!lastTimestamp) lastTimestamp = now;
-            let elapsed = now - lastTimestamp;
+        // --- Letter Flashing Sequence ---
+        function flashLettersSequence(callback) {
+            let letterIndex = 0;
+            let phase = 'pauseBefore'; // 'pauseBefore', 'show', 'hide', 'done'
+            let lastTimestamp = null;
+            let pauseBeforeMs = 300;
+            let pauseBetweenMs = Math.max(10, actualDisplaySpeed / 3);
 
-            if (phase === 'pauseBefore') {
-                if (elapsed >= pauseBeforeMs) {
-                    phase = 'show';
-                    lastTimestamp = now;
-                    flashingLetterDisplay.textContent = currentLetters[letterIndex];
-                    flashingLetterDisplay.style.color = flashingLetterColors[letterIndex];
-                    flashingLetterDisplay.style.visibility = 'visible';
-                }
-            } else if (phase === 'show') {
-                if (elapsed >= actualDisplaySpeed) {
-                    flashingLetterDisplay.style.visibility = 'hidden';
-                    phase = 'hide';
-                    lastTimestamp = now;
-                }
-            } else if (phase === 'hide') {
-                if (elapsed >= pauseBetweenMs) {
-                    letterIndex++;
-                    if (letterIndex < 3) {
+            function step(now) {
+                if (!flashCycleActive) return;
+                if (!lastTimestamp) lastTimestamp = now;
+                let elapsed = now - lastTimestamp;
+
+                if (phase === 'pauseBefore') {
+                    if (elapsed >= pauseBeforeMs) {
                         phase = 'show';
-                        flashingLetterDisplay.textContent = currentLetters[letterIndex];
-                        flashingLetterDisplay.style.color = flashingLetterColors[letterIndex];
-                        flashingLetterDisplay.style.visibility = 'visible';
                         lastTimestamp = now;
-                    } else {
-                        phase = 'done';
-                        flashingLetterDisplay.textContent = '';
+                        flashingLetterDisplay.textContent = currentLetters[letterIndex];
+                        flashingLetterDisplay.style.color = '#111';
+                        flashingLetterDisplay.style.visibility = 'visible';
+                    }
+                } else if (phase === 'show') {
+                    if (elapsed >= actualDisplaySpeed) {
                         flashingLetterDisplay.style.visibility = 'hidden';
-                        inputArea.classList.remove('hidden');
-                        letterInputs.forEach(input => input.value = '');
-                        letterInputs[0].focus();
-                        submitButton.disabled = false;
-                        lettersDisplayed = true;
-                        return;
+                        phase = 'hide';
+                        lastTimestamp = now;
+                    }
+                } else if (phase === 'hide') {
+                    if (elapsed >= pauseBetweenMs) {
+                        letterIndex++;
+                        if (letterIndex < currentLetters.length) {
+                            phase = 'show';
+                            flashingLetterDisplay.textContent = currentLetters[letterIndex];
+                            flashingLetterDisplay.style.color = '#111';
+                            flashingLetterDisplay.style.visibility = 'visible';
+                            lastTimestamp = now;
+                        } else {
+                            phase = 'done';
+                            flashingLetterDisplay.textContent = '';
+                            flashingLetterDisplay.style.visibility = 'hidden';
+                            if (callback) callback();
+                            return;
+                        }
                     }
                 }
+                if (phase !== 'done') {
+                    requestAnimationFrame(step);
+                }
             }
-            if (phase !== 'done') {
-                requestAnimationFrame(step);
-            }
+            requestAnimationFrame(step);
         }
-        requestAnimationFrame(step);
+
+        // --- 3s Pause (using requestAnimationFrame) ---
+        function startPauseAndMaybeReflash() {
+            if (!flashCycleActive) return;
+            inputArea.classList.remove('hidden');
+            submitButton.disabled = false;
+            if (letterInputs.length > 0) letterInputs[0].focus();
+            // Show re-flash message if not first cycle
+            if (reflashCount > 0) {
+                countdownMessageDisplay.textContent = `Re-flash #${reflashCount + 1}! Try to answer for max score.`;
+                setTimeout(() => { countdownMessageDisplay.textContent = ''; }, 1200);
+            }
+            // Start 3s timer using requestAnimationFrame
+            let pauseStart = null;
+            function pauseStep(now) {
+                if (!flashCycleActive) return;
+                if (!pauseStart) pauseStart = now;
+                let elapsed = now - pauseStart;
+                if (elapsed >= 3000) {
+                    reflashCount++;
+                    inputArea.classList.add('hidden');
+                    submitButton.disabled = true;
+                    flashLettersSequence(startPauseAndMaybeReflash);
+                } else {
+                    reflashTimeoutId = requestAnimationFrame(pauseStep);
+                }
+            }
+            reflashTimeoutId = requestAnimationFrame(pauseStep);
+        }
+
+        flashLettersSequence(startPauseAndMaybeReflash);
     }
 
-    function startLetterLoop() {
-        stopLetterLoop();
-        isLoopingActive = true;
-        loopCounter = 0;
-        flashingLetterDisplay.style.visibility = 'visible';
-        let lastTimestamp = null;
-
-        function loopStep(now) {
-            if (!isLoopingActive) return;
-            if (!lastTimestamp) lastTimestamp = now;
-            let elapsed = now - lastTimestamp;
-            if (elapsed >= actualDisplaySpeed) {
-                flashingLetterDisplay.textContent = currentLetters[loopCounter % 3];
-                flashingLetterDisplay.style.color = flashingLetterColors[loopCounter % 3];
-                loopCounter++;
-                lastTimestamp = now;
-            }
-            requestAnimationFrame(loopStep);
+    function stopFlashCycle() {
+        flashCycleActive = false;
+        if (reflashTimeoutId) {
+            cancelAnimationFrame(reflashTimeoutId);
+            reflashTimeoutId = null;
         }
-        flashingLetterDisplay.textContent = currentLetters[loopCounter % 3];
-        flashingLetterDisplay.style.color = flashingLetterColors[loopCounter % 3];
-        loopCounter++;
-        requestAnimationFrame(loopStep);
-
-        inputArea.classList.remove('hidden');
-        letterInputs.forEach(input => input.value = '');
-        letterInputs[0].focus();
-        submitButton.disabled = false;
-    }
-
-    function stopLetterLoop() {
-        isLoopingActive = false;
+        flashingLetterDisplay.textContent = '';
+        flashingLetterDisplay.style.visibility = 'hidden';
     }
 
     // --- Game Flow & UI Updates ---
@@ -184,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentSpeedDisplay.textContent = gameActive ? actualDisplaySpeed : "N/A";
     }
 
-    function resetUIForNewRound() { // Renamed from resetUIForNewGame for clarity
+    function resetUIForNewRound() {
         messageDisplay.textContent = "";
         messageDisplay.className = "";
         countdownMessageDisplay.textContent = "";
@@ -194,7 +231,8 @@ document.addEventListener('DOMContentLoaded', () => {
         flashingLetterDisplay.textContent = "";
         flashingLetterDisplay.style.visibility = 'hidden';
         if (countdownIntervalId) clearInterval(countdownIntervalId);
-        stopLetterLoop();
+        stopFlashCycle();
+        reflashCount = 0;
     }
 
     function startGame() {
@@ -223,12 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resetUIForNewRound();
         generateLetters();
         currentSpeedDisplay.textContent = actualDisplaySpeed; // Ensure speed is updated for this round
-
-        if (selectedGameMode === "classic") {
-            displayLettersSequential();
-        } else if (selectedGameMode === "looping") {
-            startLetterLoop();
-        }
+        manageFlashAndInputCycle();
     }
 
     function calculateSpeedDecrease(isPerfect, speed, minSpeed) {
@@ -257,13 +290,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleAnswerSubmitted() {
-        if (selectedGameMode === "classic" && !lettersDisplayed) return;
-
-        if (selectedGameMode === "looping") {
-            stopLetterLoop();
-            flashingLetterDisplay.style.visibility = 'hidden';
-            flashingLetterDisplay.textContent = "";
-        }
+        stopFlashCycle();
+        flashingLetterDisplay.style.visibility = 'hidden';
+        flashingLetterDisplay.textContent = "";
 
         const userGuess = letterInputs.map(input => input.value.toUpperCase().trim());
 
@@ -280,6 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let roundScore = 0;
         let feedbackMessage = "";
         let speedChangeMessage = "";
+        let reflashPenaltyMessage = "";
 
         // Check for any letter typed that was NOT in currentLetters
         const incorrectLettersTyped = userGuess.filter(ul => !currentLetters.includes(ul));
@@ -288,6 +318,12 @@ document.addEventListener('DOMContentLoaded', () => {
             userGuess.length === currentLetters.length &&
             new Set(userGuess).size === currentLetters.length;
 
+        // Scoring penalty for re-flashes: 20% off per re-flash (configurable)
+        const reflashPenaltyPer = 0.2;
+        const reflashMultiplier = Math.max(0, 1 - reflashCount * reflashPenaltyPer);
+        if (reflashCount > 0) {
+            reflashPenaltyMessage = ` (Re-flashed ${reflashCount} time${reflashCount > 1 ? 's' : ''}, score reduced)`;
+        }
 
         if (incorrectLettersTyped.length > 0 || !allTargetLettersGuessedCorrectly) {
             // MISTAKE: Either an invalid letter was typed, or not all correct letters were identified
@@ -323,11 +359,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 speedChangeMessage = "Speed increased.";
                 messageDisplay.className = "correct";
             }
-            feedbackMessage += ` +${Math.round(roundScore)} points. Glyphs: ${currentLetters.join(', ')}.`;
+            // Apply re-flash penalty
+            roundScore = Math.round(roundScore * reflashMultiplier);
+            feedbackMessage += ` +${roundScore} points${reflashPenaltyMessage}. Glyphs: ${currentLetters.join(', ')}.`;
         }
 
         messageDisplay.textContent = feedbackMessage + " " + speedChangeMessage;
-        score += Math.round(roundScore); // Add roundScore (0 if mistake)
+        score += roundScore; // Add roundScore (0 if mistake)
         updateDisplays(); // Update score, round, and new speed display
 
         if (gameActive) {
@@ -338,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 nextRoundButton.disabled = false;
             }
         }
-        lettersDisplayed = false; // Reset for classic mode
+        lettersDisplayed = false; // No longer used, but kept for compatibility
     }
 
     function startNextRoundCountdown() {
@@ -361,9 +399,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     }
 
+    function updateDifficulty() {
+        numberOfLettersToDisplay = parseInt(difficultySelector.value, 10);
+        createLetterInputs(numberOfLettersToDisplay);
+    }
+
     // --- Event Listeners ---
     startButton.addEventListener('click', () => {
-        stopLetterLoop();
+        stopFlashCycle();
         if (countdownIntervalId) clearInterval(countdownIntervalId);
         gameActive = false;
         toggleOptionsInputs(true);
@@ -412,8 +455,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    difficultySelector.addEventListener('change', () => {
+        if (!gameActive) {
+            updateDifficulty();
+        }
+    });
+
     // Initial Setup
-    updateSelectedOptions();
+    updateDifficulty();
     updateDisplays();
     toggleOptionsInputs(true);
     resetUIForNewRound();
