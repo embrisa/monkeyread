@@ -257,7 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
         generateLetters();
         currentSpeedDisplay.textContent = actualDisplaySpeed; // Ensure speed is updated for this round
         // Add countdown pause before flashing letters
-        let countdownDuration = 2000; // 2 seconds (can adjust as needed)
+        let countdownDuration = 1000; // 1 second
         let startTimestamp = null;
         flashingLetterDisplay.style.visibility = 'visible';
         flashingLetterDisplay.style.color = '#111';
@@ -265,9 +265,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!startTimestamp) startTimestamp = now;
             let elapsed = now - startTimestamp;
             let remaining = Math.max(0, countdownDuration - elapsed);
-            // Format as seconds.milliseconds (e.g., 1.532)
-            let seconds = (remaining / 1000).toFixed(3);
-            flashingLetterDisplay.textContent = seconds;
+            // Display only milliseconds (e.g., 532)
+            let ms = Math.floor(remaining).toString().padStart(3, '0');
+            flashingLetterDisplay.textContent = ms;
             if (remaining > 0) {
                 requestAnimationFrame(countdownStep);
             } else {
