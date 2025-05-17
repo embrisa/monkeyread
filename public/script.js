@@ -951,17 +951,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    letterInputsWrapper.addEventListener('focusin', (event) => {
-        if (event.target.tagName === 'INPUT' && event.target.type === 'text') {
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-            if (isIOS) {
-                setTimeout(() => {
-                    inputArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }, 300); // Delay to allow keyboard to animate
-            }
-        }
-    });
-
     // Initial Setup
     updateDifficulty();
     updateDisplays();
