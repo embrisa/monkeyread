@@ -670,3 +670,10 @@ li {
 #progression-style-selection {
     display: none;
 }
+
+#next-round-hint {
+    font-size: 0.95em;
+    color: #888;
+    margin-top: 4px;
+    display: block;
+}

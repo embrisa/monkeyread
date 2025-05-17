@@ -56,6 +56,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const basePointsPerLetter = 5;       // Base points before speed multiplier
     const orderBonusBasePoints = 10;     // Base bonus points before speed multiplier
 
+    // Add a helper text element for Enter-to-continue
+    let nextRoundHint = document.getElementById('next-round-hint');
+    if (!nextRoundHint) {
+        nextRoundHint = document.createElement('div');
+        nextRoundHint.id = 'next-round-hint';
+        nextRoundHint.style.display = 'none';
+        nextRoundButton.parentNode.insertBefore(nextRoundHint, nextRoundButton.nextSibling);
+    }
 
     // --- Utility Functions ---
     function getRandomLetter() {
@@ -135,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         phase = 'show';
                         lastTimestamp = now;
                         flashingLetterDisplay.textContent = currentLetters[letterIndex];
-                        flashingLetterDisplay.style.color = '#111';
+                        flashingLetterDisplay.style.color = '#000';
                         flashingLetterDisplay.style.visibility = 'visible';
                     }
                 } else if (phase === 'show') {
@@ -150,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (letterIndex < currentLetters.length) {
                             phase = 'show';
                             flashingLetterDisplay.textContent = currentLetters[letterIndex];
-                            flashingLetterDisplay.style.color = '#111';
+                            flashingLetterDisplay.style.color = '#000';
                             flashingLetterDisplay.style.visibility = 'visible';
                             lastTimestamp = now;
                         } else {
@@ -228,6 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (countdownIntervalId) clearInterval(countdownIntervalId);
         stopFlashCycle();
         reflashCount = 0;
+        showNextRoundHint(false);
     }
 
     function startGame() {
@@ -260,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let countdownDuration = 1000; // 1 second
         let startTimestamp = null;
         flashingLetterDisplay.style.visibility = 'visible';
-        flashingLetterDisplay.style.color = '#111';
+        flashingLetterDisplay.style.color = '#000';
         function countdownStep(now) {
             if (!startTimestamp) startTimestamp = now;
             let elapsed = now - startTimestamp;
@@ -388,6 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameActive) {
             nextRoundButton.classList.remove('hidden');
             nextRoundButton.disabled = false;
+            showNextRoundHint(true);
         }
         lettersDisplayed = false; // No longer used, but kept for compatibility
     }
@@ -409,6 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameActive) {
             nextRoundButton.classList.add('hidden');
             nextRoundButton.disabled = true;
+            showNextRoundHint(false);
             countdownMessageDisplay.textContent = "";
             advanceToNextRound();
         }
@@ -463,9 +474,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Listen for Enter key to trigger next round if button is visible/enabled
+    window.addEventListener('keydown', (e) => {
+        if (
+            e.key === 'Enter' &&
+            !nextRoundButton.classList.contains('hidden') &&
+            !nextRoundButton.disabled
+        ) {
+            nextRoundButton.click();
+        }
+    });
+
     // Initial Setup
     updateDifficulty();
     updateDisplays();
     toggleOptionsInputs(true);
     resetUIForNewRound();
 });
+
+function showNextRoundHint(show) {
+    nextRoundHint.textContent = show ? 'Tip: Press Enter to start the next round.' : '';
+    nextRoundHint.style.display = show ? 'block' : 'none';
+}
